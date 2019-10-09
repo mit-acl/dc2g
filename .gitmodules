@@ -1,0 +1,6 @@
+[submodule "gym-minigrid"]
+	path = gym-minigrid
+	url = git@github.com:mfe7/gym-minigrid.git
+[submodule "pix2pix-tensorflow"]
+	path = pix2pix-tensorflow
+	url = git@github.com:mfe7/pix2pix-tensorflow.git

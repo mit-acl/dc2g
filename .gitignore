@@ -1,0 +1,8 @@
+*.pyc
+*.zip
+*.egg-info
+.DS_STORE
+
+results
+data/datasets
+data/trained_networks
