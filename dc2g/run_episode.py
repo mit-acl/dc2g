@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as plt_colors
 import itertools
 
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
 import scipy.ndimage.morphology
 import pickle
@@ -961,7 +962,7 @@ def setup_plots(world_image_filename, dataset, target):
         # plt.imshow(total_c2g_array)
 
 
-def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
+def run_episode(planner, seed, env, env_type, difficulty_level='easy', use_semantic_coloring=True):
     # Load the gym environment
     env.seed(seed=int(seed))
 
@@ -1056,11 +1057,12 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
             break
     return done, env.step_count, env.world_id
 
-def start_experiment(env_name, env_type):
+def start_experiment(env_name, env_type, use_semantic_coloring):
     global ENVIRONMENT
     if env_type == "MiniGrid":
         import gym_minigrid
         env = gym.make(env_name)
+        env.use_semantic_coloring = use_semantic_coloring
         ENVIRONMENT = env
     elif env_type == "House3D":
         from House3D.common import load_config
@@ -1127,6 +1129,13 @@ def main():
         help="seed for deterministically defining random environment behavior",
         default='1337'
     )
+    parser.add_option(
+        "-u",
+        "--use_semantic_coloring",
+        dest="use_semantic_coloring",
+        help="whether or not to use semantic colors in the gridworld (or just traversable/not)",
+        default=False
+    )
     (options, args) = parser.parse_args()
 
     if "MiniGrid" in options.env_name:
@@ -1136,8 +1145,19 @@ def main():
     elif "AirSim" in options.env_name:
         env_type = "AirSim"
 
-    env = start_experiment(env_name=options.env_name, env_type=env_type)
-    success, num_steps, world_id = run_episode(planner=options.planner, seed=options.seed, env=env, env_type=env_type, difficulty_level='test_scenario')
+    env = start_experiment(
+        env_name=options.env_name,
+        env_type=env_type,
+        use_semantic_coloring=options.use_semantic_coloring
+        )
+    success, num_steps, world_id = run_episode(
+        planner=options.planner,
+        seed=options.seed,
+        env=env,
+        env_type=env_type,
+        difficulty_level='test_scenario',
+        use_semantic_coloring=options.use_semantic_coloring
+        )
 
 
 if __name__ == "__main__":

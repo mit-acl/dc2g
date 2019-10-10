@@ -10,7 +10,7 @@ def get_traversable_colors(dataset):
     if dataset == "house3d":
         traversable_colors = np.array([[0, 255, 255]]) / 255. # cyan movable
     elif "driveways" in dataset:
-        traversable_classes = ["driveway", "path", "front_door", "road", "sidewalk"]
+        traversable_classes = ["driveway", "path", "front_door", "road", "sidewalk", "traversable"]
         traversable_colors = []
         colormap_filename = "{dir_path}/data/datasets/{dataset}/labels_colors.csv".format(dir_path=dir_path, dataset=dataset)
         with open(colormap_filename) as colorcsvfile:
