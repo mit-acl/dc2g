@@ -969,9 +969,11 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy', use_seman
     if planner in ['dc2g', 'dc2g_rescale']:
         # Set up the deep cost-to-go network (load network weights)
         sess = tf.Session()
-        model_dir = "/home/mfe/code/dc2g_new/data/trained_networks/driveways_bing_iros19_full_test_works"
-        # model_dir = "/home/mfe/code/dc2g/pix2pix-tensorflow/c2g_test/world1_25_256_icra2019"
-        # model_dir = "/home/mfe/code/pix2pix-tensorflow/c2g_test/l1_20000"
+
+        model_name = "driveways_bing_iros19_masked2"
+        # model_name = "driveways_bing_iros19_full_test_works"
+
+        model_dir = "{dir_path}/../data/trained_networks/{model_name}".format(dir_path=dir_path, model_name=model_name)
         saver = tf.train.import_meta_graph(model_dir + "/export.meta")
         saver.restore(sess, model_dir + "/export")
         input_vars = json.loads(tf.get_collection("inputs")[0])
