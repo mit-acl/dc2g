@@ -43,6 +43,34 @@ save_individual_figures = True
 save_panel_figures = False
 plot_panels = True
 
+planner_args = {
+    'dc2g': {
+        'model': "driveways_bing_iros19_full_test_works",
+        'use_semantic_coloring': True,
+        'load_nn': True
+        },
+    'dc2g_rescale': {
+        'model': "driveways_bing_iros19_full_test_works",
+        'use_semantic_coloring': True,
+        'load_nn': True
+        },
+    'dc2g_without_semantics': {
+        'model': "driveways_bing_iros19_masked2",
+        'use_semantic_coloring': False,
+        'load_nn': True
+        },
+    'frontier': {
+        'model': None,
+        'use_semantic_coloring': True,
+        'load_nn': False
+        },
+    'oracle': {
+        'model': None,
+        'use_semantic_coloring': True,
+        'load_nn': False
+        },
+}
+
 import sys, signal
 def signal_handler(signal, frame):
     try:
@@ -961,25 +989,22 @@ def setup_plots(world_image_filename, dataset, target):
         # plt.subplot(232)
         # plt.imshow(total_c2g_array)
 
-
-def run_episode(planner, seed, env, env_type, difficulty_level='easy', use_semantic_coloring=True):
+def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
     # Load the gym environment
     env.seed(seed=int(seed))
 
-    if planner in ['dc2g', 'dc2g_rescale']:
+    if planner_args[planner]['load_nn']:
         # Set up the deep cost-to-go network (load network weights)
         sess = tf.Session()
 
-        model_name = "driveways_bing_iros19_masked2"
-        # model_name = "driveways_bing_iros19_full_test_works"
-
+        model_name = planner_args[planner]['model']
         model_dir = "{dir_path}/../data/trained_networks/{model_name}".format(dir_path=dir_path, model_name=model_name)
         saver = tf.train.import_meta_graph(model_dir + "/export.meta")
         saver.restore(sess, model_dir + "/export")
         input_vars = json.loads(tf.get_collection("inputs")[0])
         output_vars = json.loads(tf.get_collection("outputs")[0])
         input = tf.get_default_graph().get_tensor_by_name(input_vars["input"])
-        output = tf.get_default_graph().get_tensor_by_name(output_vars["output"])
+        output = tf.get_default_graph().get_tensor_by_name(output_vars["output_masked"])
         tf_tensors = {'input': input, 'output': output}
         try:
             goal_rgb = tf.get_default_graph().get_tensor_by_name(input_vars["goal_rgb"])
@@ -987,6 +1012,7 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy', use_seman
         except:
             pass
 
+    env.use_semantic_coloring = planner_args[planner]['use_semantic_coloring']
     env.set_difficulty_level(difficulty_level)
     obs = reset_env(env)
 
@@ -1034,6 +1060,8 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy', use_seman
         else:
             if planner == 'dc2g':
                 action = dc2g(obs, sess, tf_tensors, env.step_count, traversable_colors, goal_color, room_or_object_goal)
+            elif planner == 'dc2g_without_semantics':
+                action = dc2g(obs, sess, tf_tensors, env.step_count, traversable_colors, goal_color, room_or_object_goal)
             elif planner == 'dc2g_rescale':
                 action = dc2g(obs, sess, tf_tensors, env.step_count, traversable_colors, goal_color, room_or_object_goal, rescale_semantic_map=True)
             elif planner == 'frontier':
@@ -1059,12 +1087,11 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy', use_seman
             break
     return done, env.step_count, env.world_id
 
-def start_experiment(env_name, env_type, use_semantic_coloring):
+def start_experiment(env_name, env_type):
     global ENVIRONMENT
     if env_type == "MiniGrid":
         import gym_minigrid
         env = gym.make(env_name)
-        env.use_semantic_coloring = use_semantic_coloring
         ENVIRONMENT = env
     elif env_type == "House3D":
         from House3D.common import load_config
@@ -1119,7 +1146,8 @@ def main():
         "--planner",
         dest="planner",
         help="name of planner to use (e.g. dc2g, frontier)",
-        default='dc2g'
+        default='dc2g_without_semantics'
+        # default='dc2g'
         # default='dc2g_rescale'
         # default='frontier'
         # default='oracle'
@@ -1130,13 +1158,6 @@ def main():
         dest="seed",
         help="seed for deterministically defining random environment behavior",
         default='1337'
-    )
-    parser.add_option(
-        "-u",
-        "--use_semantic_coloring",
-        dest="use_semantic_coloring",
-        help="whether or not to use semantic colors in the gridworld (or just traversable/not)",
-        default=False
     )
     (options, args) = parser.parse_args()
 
@@ -1150,7 +1171,6 @@ def main():
     env = start_experiment(
         env_name=options.env_name,
         env_type=env_type,
-        use_semantic_coloring=options.use_semantic_coloring
         )
     success, num_steps, world_id = run_episode(
         planner=options.planner,
@@ -1158,7 +1178,6 @@ def main():
         env=env,
         env_type=env_type,
         difficulty_level='test_scenario',
-        use_semantic_coloring=options.use_semantic_coloring
         )
 
 
