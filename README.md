@@ -19,7 +19,4 @@ Test a network in the gridworld:
 ```sh
 # Use semantic coloring in the map:
 python -m dc2g.run_episode
-
-# Don't semantic coloring in the map:
-python -m dc2g.run_episode -u False
 ```
