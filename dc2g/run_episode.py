@@ -116,6 +116,9 @@ def instantiate_planner(planner, env, env_type):
         planner_obj = DC2GRescalePlanner(planner_args[planner]['model'], traversable_colors, goal_color, room_or_object_goal, 
             env.camera_fov, env.camera_range_x, env.camera_range_y, env.to_coor, env.next_coords, env.to_grid, env.grid_resolution,
             output_name=planner_args[planner]['output_name'])
+    elif planner == 'oracle':
+        planner_obj = OraclePlanner(traversable_colors, goal_color, room_or_object_goal, env.world_image_filename,
+            env.to_coor, env.next_coords, env.to_grid, env.grid_resolution)
     else:
         print("That planner wasn't implemented yet.")
         raise NotImplementedError

@@ -1,7 +1,7 @@
 from dc2g.planners.Planner import Planner
 import numpy as np
 import dc2g.planning_utils as planning_utils
-from dc2g.util import get_traversable_colors, get_goal_colors, find_traversable_inds, find_goal_inds, inflate, wrap, round_base_down, round_base
+from dc2g.util import find_traversable_inds, find_goal_inds
 from skimage.transform import resize
 import scipy.misc
 import matplotlib.colors as plt_colors
@@ -21,6 +21,7 @@ class DC2GPlanner(Planner):
         self.camera_fov = camera_fov
         self.camera_range_x = camera_range_x
         self.camera_range_y = camera_range_y
+
         self.env_to_coor = env_to_coor
         self.env_next_coords = env_next_coords
         self.env_to_grid = env_to_grid
