@@ -17,6 +17,5 @@ python pix2pix-tensorflow/pix2pix.py --mode export --output_dir data/trained_net
 
 Test a network in the gridworld:
 ```sh
-# Use semantic coloring in the map:
-python -m dc2g.run_episode
+python -m dc2g.run_episode -p dc2g
 ```
