@@ -12,10 +12,7 @@ import matplotlib.pyplot as plt
 
 class DC2GPlanner(Planner):
     def __init__(self, model_name, traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, output_name="output_masked", name="DC2G"):
-        Planner.__init__(self, name=name)
-        self.traversable_colors = traversable_colors
-        self.goal_color = goal_color
-        self.room_or_object_goal = room_or_object_goal
+        super(DC2GPlanner, self).__init__(name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution)
         self.rescale_semantic_map = False
 
         self.camera_fov = camera_fov

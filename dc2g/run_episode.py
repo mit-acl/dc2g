@@ -109,16 +109,50 @@ def instantiate_planner(planner, env, env_type):
     goal_color = get_goal_colors(dataset, [target], room_or_object_goal=room_or_object_goal)[target]
 
     if planner == 'dc2g' or planner == 'dc2g_without_semantics':
-        planner_obj = DC2GPlanner(planner_args[planner]['model'], traversable_colors, goal_color, room_or_object_goal, 
-            env.camera_fov, env.camera_range_x, env.camera_range_y, env.to_coor, env.next_coords, env.to_grid, env.grid_resolution,
-            output_name=planner_args[planner]['output_name'])
+        kwargs = {
+            'model_name':           planner_args[planner]['model'],
+            'traversable_colors':   traversable_colors,
+            'goal_color':           goal_color,
+            'room_or_object_goal':  room_or_object_goal,
+            'camera_fov':           env.camera_fov,
+            'camera_range_x':       env.camera_range_x,
+            'camera_range_y':       env.camera_range_y,
+            'env_to_coor':          env.to_coor,
+            'env_next_coords':      env.next_coords,
+            'env_to_grid':          env.to_grid,
+            'env_grid_resolution':  env.grid_resolution,
+            'output_name':          planner_args[planner]['output_name'],
+        }
+        planner_obj = DC2GPlanner(**kwargs)
     elif planner == 'dc2g_rescale':
-        planner_obj = DC2GRescalePlanner(planner_args[planner]['model'], traversable_colors, goal_color, room_or_object_goal, 
-            env.camera_fov, env.camera_range_x, env.camera_range_y, env.to_coor, env.next_coords, env.to_grid, env.grid_resolution,
-            output_name=planner_args[planner]['output_name'])
+        kwargs = {
+            'model_name':           planner_args[planner]['model'],
+            'traversable_colors':   traversable_colors,
+            'goal_color':           goal_color,
+            'room_or_object_goal':  room_or_object_goal,
+            'camera_fov':           env.camera_fov,
+            'camera_range_x':       env.camera_range_x,
+            'camera_range_y':       env.camera_range_y,
+            'env_to_coor':          env.to_coor,
+            'env_next_coords':      env.next_coords,
+            'env_to_grid':          env.to_grid,
+            'env_grid_resolution':  env.grid_resolution,
+            'output_name':          planner_args[planner]['output_name'],
+        }
+        planner_obj = DC2GRescalePlanner(**kwargs)
     elif planner == 'oracle':
-        planner_obj = OraclePlanner(traversable_colors, goal_color, room_or_object_goal, env.world_image_filename,
-            env.to_coor, env.next_coords, env.to_grid, env.grid_resolution)
+        kwargs = {
+            'traversable_colors':   traversable_colors,
+            'goal_color':           goal_color,
+            'room_or_object_goal':  room_or_object_goal,
+            'env_to_coor':          env.to_coor,
+            'env_next_coords':      env.next_coords,
+            'env_to_grid':          env.to_grid,
+            'env_grid_resolution':  env.grid_resolution,
+            'env_world_array':      env.world_array,
+            'world_image_filename': env.world_image_filename,
+        }
+        planner_obj = OraclePlanner(**kwargs)
     else:
         print("That planner wasn't implemented yet.")
         raise NotImplementedError

@@ -2,8 +2,12 @@ import os
 import matplotlib.pyplot as plt
 
 class Planner:
-    def __init__(self, name):
+    def __init__(self, name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution):
         self.name = name
+        self.traversable_colors = traversable_colors
+        self.goal_color = goal_color
+        self.room_or_object_goal = room_or_object_goal
+
         self.step_number = 0
         self.project_path = os.path.dirname(os.path.realpath(__file__))+'/../..'
         self.individual_figure_path = self.project_path+'/dc2g/results'
