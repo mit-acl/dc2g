@@ -4,5 +4,6 @@
 .DS_STORE
 
 results
-data/datasets
+data/datasets/driveways_bing_iros19/*
+!data/datasets/driveways_bing_iros19/full_semantic
 data/trained_networks
