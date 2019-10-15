@@ -11,8 +11,8 @@ import json
 import matplotlib.pyplot as plt
 
 class DC2GPlanner(Planner):
-    def __init__(self, model_name, traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, output_name="output_masked", name="DC2G"):
-        super(DC2GPlanner, self).__init__(name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution)
+    def __init__(self, model_name, traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render, output_name="output_masked", name="DC2G"):
+        super(DC2GPlanner, self).__init__(name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render)
         self.rescale_semantic_map = False
 
         self.camera_fov = camera_fov
@@ -89,16 +89,12 @@ class DC2GPlanner(Planner):
         outputs:
             - action: int of action to take
         '''
-        c2g_array, input_value, raw_c2g = self.c2g_query(semantic_array)
+        c2g_array, raw_c2g = self.c2g_query(semantic_array)
 
         if self.plot_panels:
             plt.figure("DC2G")
             plt.subplot(132)
-            plt.imshow(raw_c2g, cmap=plt.cm.gray)
-            # plt.imshow(c2g_array, cmap=plt.cm.gray)
-            # plt.figure("DC2G")
-            # plt.subplot(131)
-            # plt.imshow(input_value)
+            plt.imshow(c2g_array, cmap=plt.cm.gray)
         if self.save_individual_figures:
             plt.imsave("{individual_figure_path}/c2g/step_{step_num}.png".format(individual_figure_path=self.individual_figure_path, step_num=str(self.step_number).zfill(3)), raw_c2g)
 
@@ -137,6 +133,15 @@ class DC2GPlanner(Planner):
 
     def visualize_plans(self, semantic_array, path, fov_aware_reachable_frontier_array, reachable_array, frontier_array, position):
 
+        plt_colors = {}
+        plt_colors["red"] = [0.8500, 0.3250, 0.0980]
+        plt_colors["blue"] = [0.0, 0.4470, 0.7410]
+        plt_colors["green"] = [0.4660, 0.6740, 0.1880]
+        plt_colors["purple"] = [0.4940, 0.1840, 0.5560]
+        plt_colors["orange"] = [0.9290, 0.6940, 0.1250]
+        plt_colors["cyan"] = [0.3010, 0.7450, 0.9330]
+        plt_colors["chocolate"] = [0.6350, 0.0780, 0.1840]
+
         # path_color = np.linspace(0.5, 0.5, len(path))
         if self.plot_panels:
             path_array = np.zeros((semantic_array.shape[0], semantic_array.shape[1]))
@@ -152,25 +157,38 @@ class DC2GPlanner(Planner):
                 path_array = scipy.ndimage.morphology.binary_dilation(path_array, struct2).astype(path_array.dtype)
 
             planner_array = np.ones((semantic_array.shape[0], semantic_array.shape[1], 4))
-            colors = {'reachable': {'color': [0.7,0.7,0.7], 'condition': reachable_array == 1},
-                      'frontier':  {'color': [0,0,1], 'condition': np.any(frontier_array, axis=2) == 1},
-                      'reachable_frontier':  {'color': [0,1,0], 'condition': np.any(fov_aware_reachable_frontier_array, axis=2) == 1},
-                      'path':      {'color': [1,0,0], 'condition': path_array == 1}}
+            colors = {
+                  'reachable': {'color': plt_colors["purple"], 'condition': reachable_array == 1, 'name': 'Reachable Pts'},
+                  'frontier':  {'color': plt_colors["blue"], 'condition': np.any(frontier_array, axis=2) == 1, 'name': 'Frontier Pts'},
+                  'reachable_frontier':  {'color': plt_colors["green"], 'condition': np.any(fov_aware_reachable_frontier_array, axis=2) == 1, 'name': 'Reachable Frontier Pts'},
+                  'path':      {'color': plt_colors["red"], 'condition': path_array == 1, 'name': 'Planned Path'}
+                      }
                       # 'fov_aware_reachable_frontier':  {'color': [1,0,0], 'condition': fov_aware_reachable_frontier_array == 1}}
 
+            from matplotlib.patches import Patch
+            from matplotlib.lines import Line2D
+
+            legend_elements = []
             for key in ['frontier', 'reachable', 'reachable_frontier', 'path']:
             # for key in ['reachable_frontier']:
                 param = colors[key]
+                legend_elements.append(Patch(facecolor=param["color"], label=param['name']))
                 for i in range(len(param['color'])):
                     planner_array[:,:,i][param['condition']] = param['color'][i]
 
-            width = 1+num_inflations
-            for i in range(position[0]-width, position[0]+width):
-                for j in range(position[1]-width, position[1]+width):
-                    planner_array[j,i,:] = [0,1,1,1]
+            planner_array[position[1], position[0], :3] = plt_colors["cyan"]
+            planner_array[position[1], position[0], 3] = 1
+
+            # width = 1+num_inflations
+            # for i in range(position[0]-width, position[0]+width):
+            #     for j in range(position[1]-width, position[1]+width):
+            #         planner_array[j,i,:3] = plt_colors["cyan"]
+            #         planner_array[j,i,3] = 1
+
 
             plt.figure("DC2G")
             plt.subplot(133)
+            plt.legend(handles=legend_elements)
             # plt.imsave("{dir_path}/results/frontiers/step_{step_num}.png".format(dir_path=dir_path, step_num=str(step_number).zfill(3)), planner_array)
             plt.imshow(planner_array)
         ###################################
@@ -206,4 +224,4 @@ class DC2GPlanner(Planner):
         c2g_array = hsv[:, :, 2]
         c2g_array[(hsv[:, :, 1] > 0.3)] = 0 # remove all "red" (non-traversable pixels) from c2g map
         c2g_array = scipy.misc.imresize(c2g_array, semantic_array.shape[:2], interp='nearest')
-        return c2g_array, semantic_array, output_value_resized
+        return c2g_array, output_value_resized

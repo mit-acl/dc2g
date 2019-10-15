@@ -2,11 +2,13 @@ import os
 import matplotlib.pyplot as plt
 
 class Planner:
-    def __init__(self, name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution):
+    def __init__(self, name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render):
         self.name = name
         self.traversable_colors = traversable_colors
         self.goal_color = goal_color
         self.room_or_object_goal = room_or_object_goal
+
+        self.env_render = env_render
 
         self.step_number = 0
         self.project_path = os.path.dirname(os.path.realpath(__file__))+'/../..'
@@ -32,7 +34,7 @@ class Planner:
             fig = plt.figure('Environment', figsize=(12, 12))
             plt.axis('off')
         if plot_panels:
-            fig = plt.figure('DC2G', figsize=(12, 5))
+            fig = plt.figure('DC2G', figsize=(24, 10))
             ax = fig.add_subplot(131)
             ax.set_axis_off()
             ax.set_title('2D Partial Semantic Map')
@@ -71,10 +73,9 @@ class Planner:
         if self.plot_panels:
             plt.figure("DC2G")
             plt.suptitle('Step:' + str(self.step_number), fontsize=20)
-            # try:
-            #     render = ENVIRONMENT.render(mode=render_mode, show_trajectory=True) # TODO: add support for show_trajectory to House3D
-            # except:
-            # render = np.zeros((100,100))
+
+            # render_mode = "rgb_array"
+            # render = self.env_render(mode=render_mode, show_trajectory=True) # TODO: add support for show_trajectory to House3D
             # plt.subplot(233)
             # plt.imshow(render)
             # if make_individual_figures:
@@ -84,6 +85,7 @@ class Planner:
             plt.figure("DC2G")
             plt.subplot(131)
             plt.imshow(full_semantic_array)
+            # plt.imshow(render)
 
             if self.save_panel_figures:
                 plt.figure("DC2G")

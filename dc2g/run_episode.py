@@ -122,6 +122,7 @@ def instantiate_planner(planner, env, env_type):
             'env_to_grid':          env.to_grid,
             'env_grid_resolution':  env.grid_resolution,
             'output_name':          planner_args[planner]['output_name'],
+            'env_render':           env.render
         }
         planner_obj = DC2GPlanner(**kwargs)
     elif planner == 'dc2g_rescale':
@@ -138,6 +139,7 @@ def instantiate_planner(planner, env, env_type):
             'env_to_grid':          env.to_grid,
             'env_grid_resolution':  env.grid_resolution,
             'output_name':          planner_args[planner]['output_name'],
+            'env_render':           env.render
         }
         planner_obj = DC2GRescalePlanner(**kwargs)
     elif planner == 'oracle':
@@ -151,6 +153,7 @@ def instantiate_planner(planner, env, env_type):
             'env_grid_resolution':  env.grid_resolution,
             'env_world_array':      env.world_array,
             'world_image_filename': env.world_image_filename,
+            'env_render':           env.render
         }
         planner_obj = OraclePlanner(**kwargs)
     else:
