@@ -6,8 +6,8 @@ import numpy as np
 import scipy.ndimage.morphology
 
 class OraclePlanner(Planner):
-    def __init__(self, traversable_colors, goal_color, room_or_object_goal, world_image_filename, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_world_array, name="Frontier"):
-        super(OraclePlanner, self).__init__(name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution)
+    def __init__(self, traversable_colors, goal_color, room_or_object_goal, world_image_filename, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_world_array, env_render, name="Frontier"):
+        super(OraclePlanner, self).__init__(name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render)
 
         self.full_size_semantic_gridmap = env_world_array
         self.world_image_filename = world_image_filename

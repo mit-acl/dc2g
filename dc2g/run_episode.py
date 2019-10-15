@@ -33,6 +33,7 @@ make_individual_figures = False
 save_individual_figures = True
 save_panel_figures = False
 plot_panels = True
+make_video = True
 
 planner_args = {
     'dc2g': {
@@ -160,7 +161,7 @@ def instantiate_planner(planner, env, env_type):
         print("That planner wasn't implemented yet.")
         raise NotImplementedError
 
-    planner_obj.setup_plots(make_individual_figures, plot_panels, save_panel_figures, save_individual_figures)
+    planner_obj.setup_plots(make_individual_figures, plot_panels, save_panel_figures, save_individual_figures, make_video)
 
     return planner_obj
 
@@ -230,6 +231,7 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
         # env.render('human')
         if done:
             print('Done! Took {} steps.'.format(env.step_count))
+            planner_obj.animate_episode()
             break
     return done, env.step_count, env.world_id
 
