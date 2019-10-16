@@ -6,7 +6,7 @@ import numpy as np
 import scipy.ndimage.morphology
 
 class OraclePlanner(Planner):
-    def __init__(self, traversable_colors, goal_color, room_or_object_goal, world_image_filename, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_world_array, env_render, name="Frontier"):
+    def __init__(self, traversable_colors, goal_color, room_or_object_goal, world_image_filename, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_world_array, env_render, name="Oracle"):
         super(OraclePlanner, self).__init__(name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render)
 
         self.full_size_semantic_gridmap = env_world_array
@@ -55,7 +55,7 @@ class OraclePlanner(Planner):
             planner_array[:,:,2] = path_array
             planner_array[path_array == 0] = self.full_size_semantic_gridmap[path_array == 0]
             plt.figure("DC2G")
-            plt.subplot(133)
+            plt.subplot(self.subplots["planner"])
             plt.title("Oracle Path to Goal")
             plt.imshow(planner_array)
 

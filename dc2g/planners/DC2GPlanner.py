@@ -93,7 +93,7 @@ class DC2GPlanner(Planner):
 
         if self.plot_panels:
             plt.figure("DC2G")
-            plt.subplot(132)
+            plt.subplot(self.subplots["DC2G"])
             plt.imshow(c2g_array, cmap=plt.cm.gray)
         if self.save_individual_figures:
             plt.imsave("{individual_figure_path}/c2g/step_{step_num}.png".format(individual_figure_path=self.individual_figure_path, step_num=str(self.step_number).zfill(3)), raw_c2g)
@@ -158,12 +158,11 @@ class DC2GPlanner(Planner):
 
             planner_array = np.ones((semantic_array.shape[0], semantic_array.shape[1], 4))
             colors = {
-                  'reachable': {'color': plt_colors["purple"], 'condition': reachable_array == 1, 'name': 'Reachable Pts'},
+                  'reachable': {'color': plt_colors["purple"], 'condition': reachable_array == 1, 'name': 'Fully Explored Pts'},
                   'frontier':  {'color': plt_colors["blue"], 'condition': np.any(frontier_array, axis=2) == 1, 'name': 'Frontier Pts'},
-                  'reachable_frontier':  {'color': plt_colors["green"], 'condition': np.any(fov_aware_reachable_frontier_array, axis=2) == 1, 'name': 'Reachable Frontier Pts'},
+                  'reachable_frontier':  {'color': plt_colors["green"], 'condition': np.any(fov_aware_reachable_frontier_array, axis=2) == 1, 'name': 'Frontier-Extending Pts'},
                   'path':      {'color': plt_colors["red"], 'condition': path_array == 1, 'name': 'Planned Path'}
                       }
-                      # 'fov_aware_reachable_frontier':  {'color': [1,0,0], 'condition': fov_aware_reachable_frontier_array == 1}}
 
             from matplotlib.patches import Patch
             from matplotlib.lines import Line2D
@@ -187,8 +186,10 @@ class DC2GPlanner(Planner):
 
 
             plt.figure("DC2G")
-            plt.subplot(133)
-            plt.legend(handles=legend_elements)
+            plt.subplot(self.subplots["planner"])
+            # plt.legend(handles=legend_elements, bbox_to_anchor=(1,1.02,1,0.2), loc="lower left", mode="expand", ncol=len(colors))
+            plt.legend(handles=legend_elements, loc="upper right", ncol=2, fontsize=12)
+
             # plt.imsave("{dir_path}/results/frontiers/step_{step_num}.png".format(dir_path=dir_path, step_num=str(step_number).zfill(3)), planner_array)
             plt.imshow(planner_array)
         ###################################
