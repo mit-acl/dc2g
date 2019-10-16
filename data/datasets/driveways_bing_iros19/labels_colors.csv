@@ -1,0 +1,19 @@
+class,r,g,b
+__ignore__,0,0,0
+front_door,128,0,0
+grass,0,128,0
+road,128,128,0
+driveway,0,0,128
+car,128,0,128
+path,0,128,128
+house,128,128,128
+sidewalk,64,0,0
+fence,192,0,0
+tree,64,128,0
+mailbox,192,128,0
+bush,64,0,128
+garage door,192,0,128
+nothing,64,128,128
+traversable,255,255,255
+_boundary_,0,0,0
+_background_,0,0,0
