@@ -2,34 +2,23 @@ import torch
 import argparse
 import os
 import numpy as np
-from misc.utils import set_log, make_env
+from misc.utils import set_log, make_env, set_policy
 from tensorboardX import SummaryWriter
 from trainer import train
-
-
-def set_policy(env, tb_writer, log, args, name):
-    if name == "agent":
-        from policy.agent import Agent
-        policy = Agent(env=env, tb_writer=tb_writer, log=log, name=name, args=args)
-    else:
-        raise ValueError("Invalid name")
-
-    return policy
 
 
 def main(args):
     # Create directories
     if not os.path.exists("./logs"):
         os.makedirs("./logs")
-    # if not os.path.exists("./pytorch_models"):
-    #     os.makedirs("./pytorch_models")
+    if not os.path.exists("./pytorch_models"):
+        os.makedirs("./pytorch_models")
 
     # Set logs
     tb_writer = SummaryWriter('./logs/tb_{0}'.format(args.log_name))
     log = set_log(args)
 
     # Create env
-    # TODO env.set_difficulty_level('easy')
     env = make_env(args)
 
     # Set seeds
@@ -38,9 +27,7 @@ def main(args):
     np.random.seed(args.seed)
 
     # Initialize policy
-    agent = set_policy(env, tb_writer, log, args, name="agent")
-    import sys
-    sys.exit()
+    agent = set_policy(env, tb_writer, log, args, name=args.algorithm)
 
     # Start train
     train(agent=agent, env=env, log=log, tb_writer=tb_writer, args=args)
@@ -50,6 +37,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
 
     # Algorithm
+    parser.add_argument(
+        "--algorithm", type=str, choices=["DQN"], required=True,
+        help="Algorithm to train agent")
     parser.add_argument(
         "--tau", default=0.01, type=float, 
         help="Target network update rate")
