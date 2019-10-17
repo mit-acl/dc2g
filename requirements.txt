@@ -4,4 +4,4 @@ gym[atari]==0.10.5
 tensorboardX>=1.2
 PyQt5
 matplotlib
-scikit-image
+scikit-image==0.14.2
