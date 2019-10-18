@@ -34,10 +34,12 @@ class Agent(PolicyBase):
 
     def select_stochastic_action(self, obs, total_timesteps):
         if np.random.rand() > self.epsilon:
+            # Exploitation
+            obs = preprocess_obs(obs)
             action = self.policy.select_action(obs)
         else:
-            action = np.zeros((self.args.n_action,), dtype=np.float32)
-            action[np.random.randint(low=0, high=self.args.n_action, size=(1,))] = 1
+            # Exploration
+            action = np.random.randint(low=0, high=self.output_dim, size=(1,))
 
             if self.epsilon > 0.05:
                 self.epsilon *= 0.9999  # Reduce epsilon over time
