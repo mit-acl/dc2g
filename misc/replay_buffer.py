@@ -40,4 +40,6 @@ class ReplayBuffer(object):
             r.append(np.array(R, copy=False))
             d.append(np.array(D, copy=False))
 
-        return np.array(x), np.array(y), np.array(u), np.array(r).reshape(-1, 1), np.array(d).reshape(-1, 1)
+        return \
+            np.array(x), np.array(y), np.asarray(u, dtype=np.int64).reshape(-1, 1), \
+            np.array(r).reshape(-1, 1), np.array(d).reshape(-1, 1)

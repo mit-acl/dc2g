@@ -1,3 +1,5 @@
+from misc.utils import preprocess_obs
+
 total_timesteps = 0
 total_eps = 0
 
@@ -9,6 +11,7 @@ def eval_progress(env, agent, n_eval, log, tb_writer, args):
     for i_eval in range(n_eval):
         ep_timesteps = 0.
         obs = env.reset()
+        obs = preprocess_obs(obs)
 
         while True:
             # Select action
@@ -16,6 +19,7 @@ def eval_progress(env, agent, n_eval, log, tb_writer, args):
 
             # Take action in env
             new_obs, reward, done, _ = env.step(action)
+            new_obs = preprocess_obs(new_obs)
 
             # For next timestep
             obs = new_obs
@@ -36,6 +40,7 @@ def collect_one_traj(agent, env, log, args, tb_writer):
     ep_reward = 0
     ep_timesteps = 0
     obs = env.reset()
+    obs = preprocess_obs(obs)
 
     while True:
         # Select action
@@ -43,6 +48,7 @@ def collect_one_traj(agent, env, log, args, tb_writer):
 
         # Take action in env
         new_obs, reward, done, _ = env.step(action)
+        new_obs = preprocess_obs(new_obs)
 
         # Add experience to memory
         agent.add_memory(
@@ -76,5 +82,4 @@ def train(agent, env, log, tb_writer, args):
         collect_one_traj(agent=agent, env=env, log=log, args=args, tb_writer=tb_writer)
 
         # Update policy
-        raise NotImplementedError("todo tomorrow")
         agent.update_policy(total_timesteps=total_timesteps)
