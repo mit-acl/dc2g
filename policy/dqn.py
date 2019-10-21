@@ -40,12 +40,13 @@ class Critic(nn.Module):
         self.name = name
 
     def forward(self, x):
+        batch_size = x.shape[0]
         for i_conv in range(3):
             x = getattr(self, self.name + "_conv" + str(i_conv + 1))(x)
             x = getattr(self, self.name + "_bn" + str(i_conv + 1))(x)
             x = F.relu(x)
 
-        x = x.view(1, -1)  # Concat output of conv
+        x = x.view(batch_size, -1)  # Concat output of conv
         return getattr(self, self.name + "_fc")(x)
 
     def _decompose_input_dim(self, input_dim):
@@ -82,35 +83,28 @@ class DQN(object):
 
         return np.argmax(logits)
 
-    def train(self, replay_buffer, iterations, batch_size, discount, tau, policy_freq):
-        raise NotImplementedError()
+    def train(self, replay_buffer, iterations):
         debug = {}
         debug["critic_loss"] = 0.
-        debug["actor_loss"] = 0.
 
         for it in range(iterations):
             # Sample replay buffer 
-            x, y, u, r, d = replay_buffer.sample(batch_size)
+            x, y, u, r, d = replay_buffer.sample(self.args.batch_size)
             state = torch.FloatTensor(x).to(device)
-            action = torch.FloatTensor(u).to(device)
             next_state = torch.FloatTensor(y).to(device)
-            done = torch.FloatTensor(1 - d).to(device)
+            action = torch.LongTensor(u).to(device)
             reward = torch.FloatTensor(r).to(device)
+            done = torch.FloatTensor(1 - d).to(device)
 
-            # Select next action according to policy 
-            next_action = self.actor_target(next_state)
-            next_action = onehot_from_logits(next_action)
-
-            # Compute the target Q value
-            target_Q1, target_Q2 = self.critic_target(next_state, next_action)
-            target_Q = torch.min(target_Q1, target_Q2)
-            target_Q = reward + (done * discount * target_Q).detach()
-
-            # Get current Q estimates
-            current_Q1, current_Q2 = self.critic(state, action)
+            # Get target Q value
+            next_state_Q = self.critic_target(next_state).max(1)[0].unsqueeze(1)
+            target_Q = reward + (done * self.args.discount * next_state_Q).detach()
+            
+            # Get current Q value
+            state_Q = self.critic(state).gather(1, action)
 
             # Compute critic loss
-            critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q) 
+            critic_loss = F.smooth_l1_loss(state_Q, target_Q)
 
             # Optimize the critic
             self.critic_optimizer.zero_grad()
@@ -119,26 +113,9 @@ class DQN(object):
             self.critic_optimizer.step()
             debug["critic_loss"] += critic_loss.cpu().data.numpy().flatten()
 
-            # Delayed policy updates
-            if it % policy_freq == 0:
-                # Compute actor loss
-                action = self.actor(state)
-                action = gumbel_softmax(action, hard=True)
-                actor_loss = -self.critic.Q1(state, action).mean()
-
-                # Optimize the actor 
-                self.actor_optimizer.zero_grad()
-                actor_loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), 0.5)
-                self.actor_optimizer.step()
-                debug["actor_loss"] += actor_loss.cpu().data.numpy().flatten()
-
-                # Update the frozen target models
-                for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
-                    target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
-
-                for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
-                    target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+            # Update the frozen target models
+            for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
+                target_param.data.copy_(self.args.tau * param.data + (1 - self.args.tau) * target_param.data)
 
         return debug
 

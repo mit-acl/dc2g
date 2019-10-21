@@ -1,5 +1,4 @@
-import copy
-import numpy as np 
+from misc.utils import preprocess_obs
 
 total_timesteps = 0
 total_eps = 0
@@ -10,17 +9,17 @@ def eval_progress(env, agent, n_eval, log, tb_writer, args):
     eval_reward = 0.
 
     for i_eval in range(n_eval):
-        print("i_eval:", i_eval)
         ep_timesteps = 0.
         obs = env.reset()
+        obs = preprocess_obs(obs)
 
         while True:
             # Select action
             action = agent.select_deterministic_action(obs)
-            print("action:", action)
 
             # Take action in env
             new_obs, reward, done, _ = env.step(action)
+            new_obs = preprocess_obs(new_obs)
 
             # For next timestep
             obs = new_obs
@@ -40,33 +39,36 @@ def collect_one_traj(agent, env, log, args, tb_writer):
 
     ep_reward = 0
     ep_timesteps = 0
-    env_observation = env.reset()
+    obs = env.reset()
+    obs = preprocess_obs(obs)
 
     while True:
         # Select action
-        agent_action = agent.select_stochastic_action(np.array(env_observation), total_timesteps)
+        action = agent.select_stochastic_action(obs, total_timesteps)
 
         # Take action in env
-        new_env_observation, env_reward, done, _ = env.step(copy.deepcopy(agent_action))
+        new_obs, reward, done, _ = env.step(action)
+        new_obs = preprocess_obs(new_obs)
 
         # Add experience to memory
         agent.add_memory(
-            obs=env_observation,
-            new_obs=new_env_observation,
-            action=agent_action,
-            reward=env_reward,
+            obs=obs,
+            new_obs=new_obs,
+            action=action,
+            reward=reward,
             done=done)
 
         # For next timestep
-        env_observation = new_env_observation
+        obs = new_obs
         ep_timesteps += 1
         total_timesteps += 1
-        ep_reward += env_reward
+        ep_reward += reward
 
         if done: 
             total_eps += 1
             log[args.log_name].info("Train episode reward {} at episode {}".format(ep_reward, total_eps))
             tb_writer.add_scalars("reward", {"train_reward": ep_reward}, total_eps)
+            tb_writer.add_scalar("debug/memory", len(agent.memory), total_eps)
 
             return ep_reward
 
@@ -75,12 +77,9 @@ def train(agent, env, log, tb_writer, args):
     while True:
         # Measure performance for reporting results in paper
         eval_progress(env=env, agent=agent, n_eval=10, log=log, tb_writer=tb_writer, args=args)
-        import sys
-        sys.exit()
 
         # Collect one trajectory
         collect_one_traj(agent=agent, env=env, log=log, args=args, tb_writer=tb_writer)
-        tb_writer.add_scalar("debug/memory", len(agent.memory), total_eps)
 
         # Update policy
         agent.update_policy(total_timesteps=total_timesteps)
