@@ -67,9 +67,6 @@ if __name__ == "__main__":
         "--env-name", type=str, required=True,
         help="OpenAI gym environment name")
     parser.add_argument(
-        "--ep-max-timesteps", type=int, required=True,
-        help="Episode is terminated when max timestep is reached")
-    parser.add_argument(
         "--n-action", type=int, default=4,
         help="# of possible actions")
 
