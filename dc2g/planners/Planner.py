@@ -2,6 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import glob
 import imageio
+from skimage.transform import resize
 
 plt.rcParams.update({
     'font.size': 22,
@@ -146,10 +147,21 @@ class Planner:
         filenames = glob.glob(all_filenames)
         filenames.sort()
         images = []
+        if fig_type in ["observation"]:
+            resize_figs = True
+            img_size = (400,400)
+        else:
+            resize_figs = False
         for filename in filenames:
-            images.append(imageio.imread(filename))
+            img = imageio.imread(filename)
+            if resize_figs:
+                img = resize(img, img_size, order=0)
+            images.append(img)
         for i in range(10):
-            images.append(imageio.imread(last_filename))
+            img = imageio.imread(last_filename)
+            if resize_figs:
+                img = resize(img, img_size, order=0)
+            images.append(img)
     
         # if not self.save_panel_figures:
         #     # was only saving for sake of video, so delete them

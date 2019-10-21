@@ -228,14 +228,16 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
         # Execute the action in the environment and receive new observation
         obs, reward, done, info = env.step(action)
 
-        if env.step_count == 10:
-            planner_obj.animate_episode(fig_type="observation")
-            break
+        # if env.step_count == 10:
+        #     # planner_obj.animate_episode(fig_type="observation")
+        #     planner_obj.animate_episode()
+        #     break
 
         # env.render('human')
         if done:
             print('Done! Took {} steps.'.format(env.step_count))
-            planner_obj.animate_episode()
+            planner_obj.animate_episode(fig_type="observation")
+            # planner_obj.animate_episode()
             break
     return done, env.step_count, env.world_id
 
