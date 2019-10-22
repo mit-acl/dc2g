@@ -1,0 +1,19 @@
+<launch>
+	<!-- <param name="/use_sim_time" value="false"/> -->
+
+	<node pkg="dc2g_ros" type="dc2g_node.py" name="dc2g_node" output="screen">
+		<remap from="~cmd_vel" to="/cmd_vel"/>
+		<remap from="~map" to="/octomap_map2d_image"/>
+		<remap from="~pose" to="/odometry/wheel_encoders_only"/>
+
+		<param name="~planner_name" value="dc2g"/>
+		<param name="~planner_hz" value="10"/>
+		<param name="~base_link_frame_id" value="/base_link"/>
+		<param name="~robot_linear_speed" value="0.2"/>
+		<param name="~robot_angular_speed" value="0.3"/>
+
+	</node>
+
+	<node pkg="tf" type="static_transform_publisher" name="realsense_tf" args="-0.096 0.015 0.508 -0.509 0.492 -0.486 0.513 /base_link /realsense_color_optical_frame 100"/>
+
+</launch>

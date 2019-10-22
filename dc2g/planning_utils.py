@@ -74,7 +74,7 @@ def breadth_first_search2(traversable_array, goal_array, start_pos, start_theta_
     # print("start_pos: {}, start_theta_ind: {}".format(start_pos, start_theta_ind))
     if traversable_array[start_pos[1], start_pos[0]] == 0:
         print('[breadth_first_search] the starting position is not traversable. that seems pretty wrong.')
-        return
+        return None, None
     started_at_goal, theta_in_goal = check_if_at_goal(goal_array, start_pos, start_theta_ind, verbose=True)
     if started_at_goal:
         # If currently at goal position, remove it from consideration
@@ -105,18 +105,19 @@ def breadth_first_search2(traversable_array, goal_array, start_pos, start_theta_
         px, py, theta_ind = vertex
         children, actions = get_children(px, py, theta_ind, traversable_array.shape, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution) # TODO: This probably should be env-specific (action set)
         for i in range(len(children)):
-            # print("[breadth_first_search] children[i]: {}".format(children[i]))
+            print("[breadth_first_search] children[i]: {}".format(children[i]))
             try:
                 skip = traversable_array[children[i][1], children[i][0]] == 0
             except IndexError:
                 skip = True
             if skip:
-                # print("child is not traversable")
+                print("child is not traversable")
                 continue
             if visited_array[children[i][1], children[i][0], children[i][2]] == 0:
                 visited_array[children[i][1], children[i][0], children[i][2]] = 1
                 queue.append(children[i])
                 if children[i] not in meta:
+                    print("adding child to meta.")
                     meta[children[i]] = (vertex, actions[i])
         # if num_vertices_popped % 100 == 0:
         # # if num_vertices_popped % 1 == 0:
@@ -134,20 +135,20 @@ def get_children(gridmap_x, gridmap_y, theta_ind, gridmap_upper_bnds, env_to_coo
     real_x, real_y = env_to_coor(gridmap_x, gridmap_y)
     next_states, actions = env_next_coords(real_x, real_y, theta_ind)
     next_gridmap_x, next_gridmap_y = env_to_grid(next_states[:,0], next_states[:,1])
-    # print("started at gridmap_x, gridmap_y, theta_ind: ({},{},{})".format(gridmap_x, gridmap_y, theta_ind))
-    # print("real_x, real_y, theta_ind: ({},{},{})".format(real_x, real_y, theta_ind))
-    # print("next_states: {}".format(next_states))
-    # print("next_gridmap_x, next_gridmap_y: ({},{})".format(next_gridmap_x, next_gridmap_y))
+    print("started at gridmap_x, gridmap_y, theta_ind: ({},{},{})".format(gridmap_x, gridmap_y, theta_ind))
+    print("real_x, real_y, theta_ind: ({},{},{})".format(real_x, real_y, theta_ind))
+    print("next_states: {}".format(next_states))
+    print("next_gridmap_x, next_gridmap_y: ({},{})".format(next_gridmap_x, next_gridmap_y))
 
     gridmap_discretization = int(1./env_grid_resolution) # TODO: this could become a property of the env... or at least based on the minimum action
     # gridmap_discretization = 9 # TODO: this could become a property of the env_.. or at least based on the minimum action
 
     num_jumps_x = np.around((next_gridmap_x - gridmap_x) / gridmap_discretization).astype(int)
     next_gridmap_x = gridmap_x + gridmap_discretization*num_jumps_x
-    # print("num_jumps_x, next_gridmap_x: ({},{})".format(num_jumps_x, next_gridmap_x))
+    print("num_jumps_x, next_gridmap_x: ({},{})".format(num_jumps_x, next_gridmap_x))
     num_jumps_y = np.around((next_gridmap_y - gridmap_y) / gridmap_discretization).astype(int)
     next_gridmap_y = gridmap_y + gridmap_discretization*num_jumps_y
-    # print("num_jumps_y, next_gridmap_y: ({},{})".format(num_jumps_y, next_gridmap_y))
+    print("num_jumps_y, next_gridmap_y: ({},{})".format(num_jumps_y, next_gridmap_y))
 
     # next_gridmap = np.zeros_like(next_states, dtype=int)
     # gridmap_offset_x = gridmap_x % gridmap_discretization
@@ -167,7 +168,7 @@ def get_children(gridmap_x, gridmap_y, theta_ind, gridmap_upper_bnds, env_to_coo
             next_gridmap_list.append((next_gridmap_x[i], next_gridmap_y[i], int(next_states[i,2])))
             actions_in_bounds.append(actions[i])
 
-    # print("next_gridmap_list: {}".format(next_gridmap_list))
+    print("next_gridmap_list: {}".format(next_gridmap_list))
 
     return next_gridmap_list, actions_in_bounds
 

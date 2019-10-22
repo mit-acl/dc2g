@@ -7,8 +7,10 @@ import scipy.misc
 import matplotlib.colors as plt_colors
 import tensorflow as tf
 import json
+import os
 
 import matplotlib.pyplot as plt
+
 
 class DC2GPlanner(Planner):
     def __init__(self, model_name, traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render, output_name="output_masked", name="DC2G"):
@@ -28,17 +30,17 @@ class DC2GPlanner(Planner):
 
     def load_model(self, model_name, output_name="output_masked"):
         # Set up the deep cost-to-go network (load network weights)
-        self.tf_sess = tf.Session()
+        self.tf_sess = tf.compat.v1.Session()
         model_dir = "{project_path}/data/trained_networks/{model_name}".format(project_path=self.project_path, model_name=model_name)
-        saver = tf.train.import_meta_graph(model_dir + "/export.meta")
+        saver = tf.compat.v1.train.import_meta_graph(model_dir + "/export.meta")
         saver.restore(self.tf_sess, model_dir + "/export")
-        input_vars = json.loads(tf.get_collection("inputs")[0])
-        output_vars = json.loads(tf.get_collection("outputs")[0])
-        input = tf.get_default_graph().get_tensor_by_name(input_vars["input"])
-        output = tf.get_default_graph().get_tensor_by_name(output_vars[output_name])
+        input_vars = json.loads(tf.compat.v1.get_collection("inputs")[0])
+        output_vars = json.loads(tf.compat.v1.get_collection("outputs")[0])
+        input = tf.compat.v1.get_default_graph().get_tensor_by_name(input_vars["input"])
+        output = tf.compat.v1.get_default_graph().get_tensor_by_name(output_vars[output_name])
         self.tf_tensors = {'input': input, 'output': output}
         try:
-            goal_rgb = tf.get_default_graph().get_tensor_by_name(input_vars["goal_rgb"])
+            goal_rgb = tf.compat.v1.get_default_graph().get_tensor_by_name(input_vars["goal_rgb"])
             self.tf_tensors['goal_rgb'] = goal_rgb
         except:
             pass
@@ -49,7 +51,9 @@ class DC2GPlanner(Planner):
         traversable_array, _, _ = find_traversable_inds(obs['semantic_gridmap'], self.traversable_colors)
         goal_array, _, _ = find_goal_inds(obs['semantic_gridmap'], self.goal_color, self.room_or_object_goal)
         bfs_parent_dict, reachable_array = planning_utils.breadth_first_search2(traversable_array, goal_array, obs['pos'], obs['theta_ind'], self.env_to_coor, self.env_next_coords, self.env_to_grid, self.env_grid_resolution, exhaustive=True)
-        if np.sum(goal_array) == 0:
+        if bfs_parent_dict is None and reachable_array is None:
+            action = 3
+        elif np.sum(goal_array) == 0:
             # Haven't seen the goal yet ==> use dc2g
             # print("Haven't seen the goal yet ==> Using DC2G.")
             # action = dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, self.sess, self.tf_tensors, self.bfs_parent_dict, self.step_number, self.rescale_semantic_map)
@@ -67,7 +71,8 @@ class DC2GPlanner(Planner):
                 # print("Have seen the goal, but no path exists to it ==> Using DC2G.")
                 # action = dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, self.sess, self.tf_tensors, self.bfs_parent_dict, self.step_number, self.rescale_semantic_map)
                 action = self.dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, bfs_parent_dict)
-        self.plot(obs['semantic_gridmap'])
+        # self.plot(obs['semantic_gridmap'])
+        self.plot(traversable_array)
         return action
 
     def visualize(self):
@@ -91,6 +96,8 @@ class DC2GPlanner(Planner):
         '''
         c2g_array, raw_c2g = self.c2g_query(semantic_array)
 
+        self.c2g_array = c2g_array
+
         if self.plot_panels:
             plt.figure("DC2G")
             plt.subplot(self.subplots["DC2G"])
@@ -100,6 +107,13 @@ class DC2GPlanner(Planner):
 
         # print("Looking for frontier pts in semantic map...")
         frontier_array, reachable_frontier_array, fov_aware_frontier_array, fov_aware_reachable_frontier_array = planning_utils.find_reachable_frontier_indices2(semantic_array, reachable_array, self.camera_fov, self.camera_range_x, self.camera_range_y)
+        if self.save_individual_figures:
+            self.saveIndivFig("frontiers", frontier_array)
+            self.saveIndivFig("reachable_frontier_array", frontier_array)
+            self.saveIndivFig("fov_aware_frontier_array", frontier_array)
+            self.saveIndivFig("fov_aware_reachable_frontier_array", frontier_array)
+
+        self.frontier_array = frontier_array
 
         frontier_c2gs = np.zeros_like(c2g_array)
         frontier_c2gs[np.any(fov_aware_reachable_frontier_array, axis=2) == 1] = c2g_array[np.any(fov_aware_reachable_frontier_array, axis=2) == 1]
@@ -111,6 +125,9 @@ class DC2GPlanner(Planner):
             lowest_cost_frontier_ind = np.unravel_index(frontier_c2gs.argmax(), frontier_c2gs.shape)
 
         lowest_cost_frontier_state = (lowest_cost_frontier_ind[1], lowest_cost_frontier_ind[0])
+
+        print("lowest_cost_frontier_state: {}".format(lowest_cost_frontier_state))
+        print("bfs_parent_dict: {}".format(bfs_parent_dict))
         actions_to_frontier, _, path = planning_utils.construct_path(lowest_cost_frontier_state, bfs_parent_dict)
 
         if position[0] == lowest_cost_frontier_state[0] and position[1] == lowest_cost_frontier_state[1]:
@@ -130,6 +147,12 @@ class DC2GPlanner(Planner):
 
         self.visualize_plans(semantic_array, path, fov_aware_reachable_frontier_array, reachable_array, frontier_array, position)
         return action
+
+    def saveIndivFig(self, dir, arr):
+        full_dir = "{individual_figure_path}/{dir}".format(dir=dir, individual_figure_path=self.individual_figure_path)
+        if not os.path.exists(full_dir):
+            os.makedirs(full_dir)
+        plt.imsave("{full_dir}/step_{step_num}.png".format(full_dir=full_dir, step_num=str(self.step_number).zfill(3)), arr)
 
     def visualize_plans(self, semantic_array, path, fov_aware_reachable_frontier_array, reachable_array, frontier_array, position):
 

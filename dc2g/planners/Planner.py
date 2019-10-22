@@ -10,7 +10,7 @@ plt.rcParams.update({
     'font.family': 'STIXGeneral'
     })
 
-class Planner:
+class Planner(object):
     def __init__(self, name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render):
         self.name = name
         self.traversable_colors = traversable_colors
@@ -109,8 +109,8 @@ class Planner:
             plt.figure("DC2G")
             plt.suptitle('\n\nPlanner: {name} -- Step: {step}'.format(name=self.name,step=self.step_number))
 
-            render_mode = "rgb_array"
-            render = self.env_render(mode=render_mode, show_trajectory=True) # TODO: add support for show_trajectory to House3D
+            # render_mode = "rgb_array"
+            # render = self.env_render(mode=render_mode, show_trajectory=True) # TODO: add support for show_trajectory to House3D
             # plt.subplot(self.subplots["render"])
             # plt.imshow(render)
 
@@ -126,10 +126,10 @@ class Planner:
             if self.save_panel_figures or self.make_video:
                 plt.figure("DC2G")
                 plt.savefig(self.fig_filename("panels", "png"))
-            if self.save_individual_figures or self.make_video:
-                # plt.imsave("{individual_figure_path}/results/environment/step_{step_num}.png".format(individual_figure_path=self.individual_figure_path, step_num=str(self.step_number).zfill(3)), render)
-                plt.imsave(self.fig_filename("observation", "png"), full_semantic_array)
             plt.pause(0.01)
+        if self.save_individual_figures or self.make_video:
+            # plt.imsave("{individual_figure_path}/results/environment/step_{step_num}.png".format(individual_figure_path=self.individual_figure_path, step_num=str(self.step_number).zfill(3)), render)
+            plt.imsave(self.fig_filename("observation", "png"), full_semantic_array)
 
     def animate_episode(self, fig_type="panels"):
         if not self.make_video:
