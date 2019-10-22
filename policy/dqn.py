@@ -74,12 +74,14 @@ class DQN(object):
         self.name = name
         self.args = args
 
-    def select_action(self, state):
+    def select_action(self, state, display=False):
         state = torch.FloatTensor(state).unsqueeze(0).to(device)  # Add a batch dimension
 
         logits = self.critic(state)
         logits = logits.cpu().data.numpy()
         logits = np.squeeze(logits, axis=0)
+        if display:
+            print(logits)
 
         return np.argmax(logits)
 
@@ -120,37 +122,22 @@ class DQN(object):
         return debug
 
     def save(self, filename, directory):
-        torch.save(self.actor.state_dict(), '%s/%s_actor.pth' % (directory, filename))
-        if "worker" not in self.name:
-            torch.save(self.critic.state_dict(), '%s/%s_critic.pth' % (directory, filename))
+        torch.save(self.critic.state_dict(), '%s/%s_critic.pth' % (directory, filename))
 
     def load(self, filename, directory):
         from collections import OrderedDict
 
-        actor_weight = torch.load('%s/%s_actor.pth' % (directory, filename), map_location='cpu')
+        critic_weight = torch.load('%s/%s_critic.pth' % (directory, filename), map_location='cpu')
 
-        actor_weight_fixed = OrderedDict()
-        for k, v in actor_weight.items():
+        critic_weight_fixed = OrderedDict()
+        for k, v in critic_weight.items():
             name_fixed = self.name
             for i_name, name in enumerate(k.split("_")):
                 if i_name > 0:
                     name_fixed += "_" + name
-            actor_weight_fixed[name_fixed] = v
+            critic_weight_fixed[name_fixed] = v
 
-        self.actor.load_state_dict(actor_weight_fixed)
+        self.critic.load_state_dict(critic_weight_fixed)
 
-        if "worker" not in self.name:
-            critic_weight = torch.load('%s/%s_critic.pth' % (directory, filename), map_location='cpu')
-
-            critic_weight_fixed = OrderedDict()
-            for k, v in critic_weight.items():
-                name_fixed = self.name
-                for i_name, name in enumerate(k.split("_")):
-                    if i_name > 0:
-                        name_fixed += "_" + name
-                critic_weight_fixed[name_fixed] = v
-
-            self.critic.load_state_dict(critic_weight_fixed)
-
-            self.actor_target.load_state_dict(self.actor.state_dict())
-            self.critic_target.load_state_dict(self.critic.state_dict())
+        self.actor_target.load_state_dict(self.actor.state_dict())
+        self.critic_target.load_state_dict(self.critic.state_dict())

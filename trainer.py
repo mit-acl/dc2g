@@ -14,6 +14,9 @@ def eval_progress(env, agent, n_eval, log, tb_writer, args):
         obs = preprocess_obs(obs)
 
         while True:
+            if total_eps % 100 == 0 and i_eval == 0:
+                env.render()
+
             # Select action
             action = agent.select_deterministic_action(obs)
 
@@ -76,7 +79,8 @@ def collect_one_traj(agent, env, log, args, tb_writer):
 def train(agent, env, log, tb_writer, args):
     while True:
         # Measure performance for reporting results in paper
-        eval_progress(env=env, agent=agent, n_eval=10, log=log, tb_writer=tb_writer, args=args)
+        if total_eps % 50 == 0:
+            eval_progress(env=env, agent=agent, n_eval=10, log=log, tb_writer=tb_writer, args=args)
 
         # Collect one trajectory
         collect_one_traj(agent=agent, env=env, log=log, args=args, tb_writer=tb_writer)

@@ -33,4 +33,4 @@ cd $DIR
 python3.6 main.py \
 --env-name "MiniGrid-EmptySLAM-32x32-v0" \
 --algorithm "DQN" \
---ep-max-timesteps 50 \
+--discount 0.95 \
