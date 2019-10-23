@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
-from geometry_msgs.msg import PoseStamped, Twist
+from std_msgs.msg import ColorRGBA
+from geometry_msgs.msg import PoseStamped, Twist, Vector3, Point
 from visualization_msgs.msg import Marker
 import numpy as np
 import cv2
@@ -13,11 +14,15 @@ from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Float32MultiArray
 import message_filters
+import pickle
+import os
 
 from dc2g.planners.util import instantiate_planner
 
 class DC2G:
-    def __init__(self):
+    def __init__(self, non_ros_mode=False):
+        self.non_ros_mode = non_ros_mode
+
         self.odom = None
 
         self.bridge = CvBridge()
@@ -27,8 +32,12 @@ class DC2G:
         self.lower_grid_x_min = 0
         self.lower_grid_y_min = 0
 
-        self.tf_listener = tf.TransformListener()
-        # self.tf_transformer = tf.Transformer(True, rospy.Duration(10.0))
+        if self.non_ros_mode:
+            make_panels = True
+            plot_panels = True
+        else:
+            make_panels = True
+            plot_panels = False
 
         # square_half_side_length = 10 # meters
         # self.map_x_min = self.init_px - square_half_side_length
@@ -50,16 +59,23 @@ class DC2G:
             env_to_grid=self.to_grid,
             env_grid_resolution=self.grid_resolution,
             env_render=render,
-            env_world_image_filename="tmp.png")
-        
+            env_world_image_filename="tmp.png",
+            make_panels=make_panels,
+            plot_panels=plot_panels)
+
+        if self.non_ros_mode:
+            return
+
+        self.tf_listener = tf.TransformListener()
         self.base_link_frame_id = rospy.get_param("~base_link_frame_id", "/base_link")
         self.robot_linear_speed = rospy.get_param("~robot_linear_speed", 0.2)
         self.robot_angular_speed = rospy.get_param("~robot_angular_speed", 0.3)
 
         self.sub_pose = rospy.Subscriber("~pose", Odometry, self.cbPose)
-        # self.sub_map = rospy.Subscriber("~map", Image, self.cbMap)
         self.pub_cmd_vel = rospy.Publisher("~cmd_vel", Twist, queue_size=1)
         self.pub_map_debug = rospy.Publisher("~map_debug", Image, queue_size=1)
+        self.pub_map_debug2 = rospy.Publisher("~map_debug2", Image, queue_size=1)
+        self.pub_planned_path_marker = rospy.Publisher("~planned_path_marker", Marker, queue_size=1)
 
         self.semantic_map_image_sub = message_filters.Subscriber("/octomap_map2d_image", Image,
                                             queue_size=1, buff_size=20*500*500)
@@ -86,13 +102,38 @@ class DC2G:
         obs = self.make_obs()
         action = self.planner.plan(obs)
 
+        if hasattr(self.planner, 'path'):
+            self.visualizePlannedPath(self.planner.path)
+
         if hasattr(self.planner, 'c2g_array'):
-            print('planner has c2g array!!!!!')
             map_img = self.bridge.cv2_to_imgmsg(self.planner.c2g_array)
             self.pub_map_debug.publish(map_img)
+        if hasattr(self.planner, 'planner_array'):
+            with open("{dir}/obs_{step_number}.pkl".format(dir=os.path.dirname(os.path.realpath(__file__)), step_number=str(self.planner.step_number)).zfill(3), "wb") as f:
+                pickle.dump(obs, f)
+            rgbImage = cv2.cvtColor((self.planner.planner_array*255.).astype(np.uint8), cv2.COLOR_RGBA2BGR)
+            map_img = self.bridge.cv2_to_imgmsg(rgbImage)
+            self.pub_map_debug2.publish(map_img)
 
         twist_msg = self.actionToTwist(action)
         self.pubCmdVel(twist_msg)
+
+    def visualizePlannedPath(self, path):
+        marker = Marker()
+        marker.header.stamp = rospy.Time.now()
+        marker.header.frame_id = 'world'
+        marker.ns = 'planned_path'
+        marker.id = 0
+        marker.type = marker.LINE_STRIP
+        marker.action = marker.ADD
+        for coord in path:
+            px, py = self.to_coor(coord[0], coord[1])
+            marker.points.append(Point(x=px, y=py, z=1.0))
+        marker.scale = Vector3(x=0.1,y=0.2,z=0.2)
+        marker.color = ColorRGBA(b=1.0,a=1.0)
+        marker.lifetime = rospy.Duration(0.5)
+        self.pub_planned_path_marker.publish(marker)
+
 
     def pubCmdVel(self, twist_msg):
         self.pub_cmd_vel.publish(twist_msg)
@@ -155,11 +196,11 @@ class DC2G:
         self.lower_grid_y_min = info_msg.data[-2]
         self.grid_resolution = info_msg.data[-1]
 
-        # print('====')
-        # print('====')
-        # print("xmin, ymin, res: {:.2f}, {:.2f}, {:.2f}".format(self.lower_grid_x_min, self.lower_grid_y_min, self.grid_resolution))
-        # print('====')
-        # print('====')
+        print('====')
+        print('====')
+        print("xmin, ymin, res: {:.2f}, {:.2f}, {:.2f}".format(self.lower_grid_x_min, self.lower_grid_y_min, self.grid_resolution))
+        print('====')
+        print('====')
 
         self.semantic_gridmap = self.bridge.imgmsg_to_cv2(image_msg, desired_encoding="rgb8")
         self.waiting_on_semantic_gridmap = False
@@ -181,7 +222,7 @@ class DC2G:
         if self.semantic_gridmap is not None:
             semantic_gridmap = self.semantic_gridmap
 
-            # semantic_gridmap[gx-3:gx+3, gy-3:gy+3] = [255, 255, 255]
+            # semantic_gridmap[gx-1:gx+1, gy-1:gy+1] = [255, 0, 0]
             # map_img = self.bridge.cv2_to_imgmsg(semantic_gridmap)
             # self.pub_map_debug.publish(map_img)
 
@@ -207,8 +248,9 @@ class DC2G:
         """
         Convert continuous coordinate to grid location
         """
-        gx = np.floor((x - self.lower_grid_x_min) / self.grid_resolution).astype(int)
-        gy = -(self.semantic_gridmap.shape[1] - np.floor((y - self.lower_grid_y_min) / self.grid_resolution).astype(int))
+        gx = np.floor(np.around((x - self.lower_grid_x_min) / self.grid_resolution, 8)).astype(int)
+        gy = np.floor(np.around((y - self.lower_grid_y_min) / self.grid_resolution, 8)).astype(int)
+        # gy = -(self.semantic_gridmap.shape[1] - np.floor((y - self.lower_grid_y_min) / self.grid_resolution).astype(int))
         # gy = self.semantic_gridmap.shape[1] - np.floor((y - self.lower_grid_y_min) / self.grid_resolution).astype(int)
         return gx, gy
 
@@ -217,7 +259,8 @@ class DC2G:
         Convert grid location to continuous coordinate
         """
         wx = x * self.grid_resolution + self.lower_grid_x_min
-        wy = (self.semantic_gridmap.shape[1] + y) * self.grid_resolution + self.lower_grid_y_min
+        wy = y * self.grid_resolution + self.lower_grid_y_min
+        # wy = (self.semantic_gridmap.shape[1] + y) * self.grid_resolution + self.lower_grid_y_min
         # wy = (self.semantic_gridmap.shape[1] - y) * self.grid_resolution + self.lower_grid_y_min
         return wx, wy
 
@@ -238,17 +281,24 @@ class DC2G:
         state_dim = 3 # (x,y,theta)
         next_states = np.empty((num_actions, state_dim))
         actions = [None for i in range(num_actions)]
+        
+        smallest_forward_action = 0.5 # meters
+        gridmap_discretization = int(smallest_forward_action/self.grid_resolution)
+
         for i in range(num_actions):
             action = action_dict.keys()[i]
             actions[i] = action
             cmd_vel = action_dict[action]
 
-            # Compute displacement
-            num_steps = 10
-            dt = 0.1 * num_steps
-            dx = dt * cmd_vel[0]
+            dx = smallest_forward_action * cmd_vel[0]
             dy = 0
-            dtheta = dt * cmd_vel[1]
+            dtheta = 1 * cmd_vel[1]
+            # Compute displacement
+            # num_steps = 5
+            # dt = 0.1 * num_steps
+            # dx = dt * cmd_vel[0]
+            # dy = 0
+            # dtheta = dt * cmd_vel[1]
 
             x = start_x + dx * np.cos(start_theta) - dy * np.sin(start_theta)
             y = start_y + dx * np.sin(start_theta) + dy * np.cos(start_theta)
@@ -258,7 +308,7 @@ class DC2G:
             next_states[i,1] = y
             next_states[i,2] = theta_to_theta_ind(theta)
 
-        return next_states, actions
+        return next_states, actions, gridmap_discretization
 
 # keep angle between [-pi, pi]
 def wrap(angle):

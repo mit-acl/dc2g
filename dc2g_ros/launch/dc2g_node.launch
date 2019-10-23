@@ -6,7 +6,7 @@
 		<remap from="~map" to="/octomap_map2d_image"/>
 		<remap from="~pose" to="/odometry/wheel_encoders_only"/>
 
-		<param name="~planner_name" value="dc2g"/>
+		<!-- <param name="~planner_name" value="dc2g"/> -->
 		<param name="~planner_hz" value="10"/>
 		<param name="~base_link_frame_id" value="/base_link"/>
 		<param name="~robot_linear_speed" value="0.2"/>

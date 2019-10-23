@@ -36,16 +36,17 @@ planner_args = {
         },
 }
 
-make_individual_figures = True
-save_individual_figures = True
-save_panel_figures = False
-plot_panels = False
-make_video = False
-
+# make_individual_figures = False
+# save_individual_figures = False
+# save_panel_figures = False
+# plot_panels = True
+# make_panels = True
+# make_video = False
 
 def instantiate_planner(planner, env, env_type,
     env_camera_fov=None, env_camera_range_x=None, env_camera_range_y=None, env_to_coor=None, env_next_coords=None, env_to_grid=None, env_grid_resolution=None,
-    env_render=None, env_world_image_filename=None):
+    env_render=None, env_world_image_filename=None,
+    make_individual_figures=False, save_individual_figures=False, save_panel_figures=False, make_panels=True, plot_panels=True, make_video=False):
     
     for attr in ['camera_fov', 'camera_range_x', 'camera_range_y', 'to_coor', 'next_coords', 'to_grid', 'grid_resolution', 'render', 'world_image_filename']:
         exec('env_{} = env.{} if env_{} is None else env_{}'.format(attr, attr, attr, attr))
@@ -106,7 +107,7 @@ def instantiate_planner(planner, env, env_type,
         print("That planner wasn't implemented yet.")
         raise NotImplementedError
 
-    planner_obj.setup_plots(make_individual_figures, plot_panels, save_panel_figures, save_individual_figures, make_video)
+    planner_obj.setup_plots(make_individual_figures, make_panels, plot_panels, save_panel_figures, save_individual_figures, make_video)
 
     return planner_obj
 

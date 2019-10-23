@@ -49,15 +49,23 @@ class DC2GPlanner(Planner):
     def plan(self, obs):
         self.step_number += 1
         traversable_array, _, _ = find_traversable_inds(obs['semantic_gridmap'], self.traversable_colors)
+
+        num_inflations = 3
+        struct2 = scipy.ndimage.generate_binary_structure(2, 2)
+        for i in range(num_inflations):
+            traversable_array = scipy.ndimage.morphology.binary_dilation(traversable_array, struct2).astype(traversable_array.dtype)
+
         goal_array, _, _ = find_goal_inds(obs['semantic_gridmap'], self.goal_color, self.room_or_object_goal)
         bfs_parent_dict, reachable_array = planning_utils.breadth_first_search2(traversable_array, goal_array, obs['pos'], obs['theta_ind'], self.env_to_coor, self.env_next_coords, self.env_to_grid, self.env_grid_resolution, exhaustive=True)
+
         if bfs_parent_dict is None and reachable_array is None:
             action = 3
+            path = []
         elif np.sum(goal_array) == 0:
             # Haven't seen the goal yet ==> use dc2g
             # print("Haven't seen the goal yet ==> Using DC2G.")
             # action = dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, self.sess, self.tf_tensors, self.bfs_parent_dict, self.step_number, self.rescale_semantic_map)
-            action = self.dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, bfs_parent_dict)
+            action, path = self.dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, bfs_parent_dict, traversable_array)
         else:
             goal_is_reachable, reachable_goal_inds = planning_utils.check_if_goal_reachable(goal_array, reachable_array)
             if goal_is_reachable:
@@ -70,15 +78,15 @@ class DC2GPlanner(Planner):
                 # Have seen goal, but no path to it exists yet ==> use dc2g
                 # print("Have seen the goal, but no path exists to it ==> Using DC2G.")
                 # action = dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, self.sess, self.tf_tensors, self.bfs_parent_dict, self.step_number, self.rescale_semantic_map)
-                action = self.dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, bfs_parent_dict)
-        # self.plot(obs['semantic_gridmap'])
-        self.plot(traversable_array)
+                action, path = self.dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, bfs_parent_dict, traversable_array)
+        self.path = path
+        self.plot(obs['semantic_gridmap'])
         return action
 
     def visualize(self):
         raise NotImplementedError
 
-    def dc2g_planner(self, position, theta_ind, semantic_array, reachable_array, bfs_parent_dict):
+    def dc2g_planner(self, position, theta_ind, semantic_array, reachable_array, bfs_parent_dict, traversable_array):
         '''
         Description: TODO
         inputs:
@@ -95,13 +103,17 @@ class DC2GPlanner(Planner):
             - action: int of action to take
         '''
         c2g_array, raw_c2g = self.c2g_query(semantic_array)
+        c2g_array[traversable_array == 0] = 0
+
+        # plt.imshow(c2g_array, cmap='gray', vmin=0, vmax=255)
+        # plt.show()
 
         self.c2g_array = c2g_array
 
         if self.plot_panels:
             plt.figure("DC2G")
             plt.subplot(self.subplots["DC2G"])
-            plt.imshow(c2g_array, cmap=plt.cm.gray)
+            plt.imshow(c2g_array, cmap=plt.cm.gray, interpolation='nearest')
         if self.save_individual_figures:
             plt.imsave("{individual_figure_path}/c2g/step_{step_num}.png".format(individual_figure_path=self.individual_figure_path, step_num=str(self.step_number).zfill(3)), raw_c2g)
 
@@ -126,8 +138,8 @@ class DC2GPlanner(Planner):
 
         lowest_cost_frontier_state = (lowest_cost_frontier_ind[1], lowest_cost_frontier_ind[0])
 
-        print("lowest_cost_frontier_state: {}".format(lowest_cost_frontier_state))
-        print("bfs_parent_dict: {}".format(bfs_parent_dict))
+        # print("lowest_cost_frontier_state: {}".format(lowest_cost_frontier_state))
+        # print("bfs_parent_dict: {}".format(bfs_parent_dict))
         actions_to_frontier, _, path = planning_utils.construct_path(lowest_cost_frontier_state, bfs_parent_dict)
 
         if position[0] == lowest_cost_frontier_state[0] and position[1] == lowest_cost_frontier_state[1]:
@@ -146,7 +158,7 @@ class DC2GPlanner(Planner):
         action = actions_to_frontier[0]
 
         self.visualize_plans(semantic_array, path, fov_aware_reachable_frontier_array, reachable_array, frontier_array, position)
-        return action
+        return action, path
 
     def saveIndivFig(self, dir, arr):
         full_dir = "{individual_figure_path}/{dir}".format(dir=dir, individual_figure_path=self.individual_figure_path)
@@ -166,12 +178,22 @@ class DC2GPlanner(Planner):
         plt_colors["chocolate"] = [0.6350, 0.0780, 0.1840]
 
         # path_color = np.linspace(0.5, 0.5, len(path))
-        if self.plot_panels:
+        if self.make_panels:
             path_array = np.zeros((semantic_array.shape[0], semantic_array.shape[1]))
-            path_inds = (np.array([x[1] for x in path]), np.array([x[0] for x in path]))
-            path_array[path_inds] = 1
+            # path_inds = (np.array([x[1] for x in path]), np.array([x[0] for x in path]))
+            # path_array[path_inds] = 1
 
-            num_inflations = 0
+            for i in range(len(path)-1):
+                x_low = min(path[i][1], path[i+1][1])
+                x_high = max(path[i][1], path[i+1][1])
+                y_low = min(path[i][0], path[i+1][0])
+                y_high = max(path[i][0], path[i+1][0])
+                if x_low == x_high: x_high += 1
+                if y_low == y_high: y_high += 1
+                path_array[x_low:x_high, y_low:y_high] = 1
+
+
+            num_inflations = 1
             struct2 = scipy.ndimage.generate_binary_structure(2, 2)
             for i in range(num_inflations):
                 for i in range(4):
@@ -187,19 +209,21 @@ class DC2GPlanner(Planner):
                   'path':      {'color': plt_colors["red"], 'condition': path_array == 1, 'name': 'Planned Path'}
                       }
 
-            from matplotlib.patches import Patch
-            from matplotlib.lines import Line2D
-
             legend_elements = []
-            for key in ['frontier', 'reachable', 'reachable_frontier', 'path']:
-            # for key in ['reachable_frontier']:
+            # keys = ['frontier']
+            # keys = ['path']
+            keys = ['frontier', 'reachable', 'reachable_frontier', 'path']
+            # keys = ['frontier', 'reachable', 'reachable_frontier']
+            for key in keys:
                 param = colors[key]
-                legend_elements.append(Patch(facecolor=param["color"], label=param['name']))
+                # legend_elements.append(Patch(facecolor=param["color"], label=param['name']))
                 for i in range(len(param['color'])):
                     planner_array[:,:,i][param['condition']] = param['color'][i]
 
             planner_array[position[1], position[0], :3] = plt_colors["cyan"]
             planner_array[position[1], position[0], 3] = 1
+
+            self.planner_array = planner_array
 
             # width = 1+num_inflations
             # for i in range(position[0]-width, position[0]+width):
@@ -207,14 +231,18 @@ class DC2GPlanner(Planner):
             #         planner_array[j,i,:3] = plt_colors["cyan"]
             #         planner_array[j,i,3] = 1
 
+            if self.plot_panels:
+                from matplotlib.patches import Patch
+                for key in keys:
+                    param = colors[key]
+                    legend_elements.append(Patch(facecolor=param["color"], label=param['name']))
+                plt.figure("DC2G")
+                plt.subplot(self.subplots["planner"])
+                # plt.legend(handles=legend_elements, bbox_to_anchor=(1,1.02,1,0.2), loc="lower left", mode="expand", ncol=len(colors))
+                plt.legend(handles=legend_elements, loc="upper right", ncol=2, fontsize=12)
 
-            plt.figure("DC2G")
-            plt.subplot(self.subplots["planner"])
-            # plt.legend(handles=legend_elements, bbox_to_anchor=(1,1.02,1,0.2), loc="lower left", mode="expand", ncol=len(colors))
-            plt.legend(handles=legend_elements, loc="upper right", ncol=2, fontsize=12)
-
-            # plt.imsave("{dir_path}/results/frontiers/step_{step_num}.png".format(dir_path=dir_path, step_num=str(step_number).zfill(3)), planner_array)
-            plt.imshow(planner_array)
+                # plt.imsave("{dir_path}/results/frontiers/step_{step_num}.png".format(dir_path=dir_path, step_num=str(step_number).zfill(3)), planner_array)
+                plt.imshow(planner_array, interpolation='nearest')
         ###################################
 
         # if plot_panels:
@@ -238,14 +266,18 @@ class DC2GPlanner(Planner):
             input_data = input_data / 255.
         if input_data.shape[2] == 4:
             input_data = input_data[:,:,:3]
+
+        # input_data = input_data*255
         feed_dict = {self.tf_tensors['input']: input_data}
         if 'goal_rgb' in self.tf_tensors:
             goal_rgb = goal_rgb_val = np.array([128., 0., 0.])/255.
             feed_dict[self.tf_tensors['goal_rgb']] = goal_rgb
         output_value = self.tf_sess.run(self.tf_tensors['output'], feed_dict=feed_dict)
-        output_value_resized = scipy.misc.imresize(output_value, semantic_array.shape[:2], interp='nearest')
-        hsv = plt_colors.rgb_to_hsv(output_value)
-        c2g_array = hsv[:, :, 2]
-        c2g_array[(hsv[:, :, 1] > 0.3)] = 0 # remove all "red" (non-traversable pixels) from c2g map
-        c2g_array = scipy.misc.imresize(c2g_array, semantic_array.shape[:2], interp='nearest')
+        output_value_resized = scipy.misc.imresize(output_value[:,:,0], semantic_array.shape[:2], interp='nearest')
+        c2g_array = output_value_resized
+
+        # hsv = plt_colors.rgb_to_hsv(output_value)
+        # c2g_array = hsv[:, :, 2]
+        # c2g_array[(hsv[:, :, 1] > 0.3)] = 0 # remove all "red" (non-traversable pixels) from c2g map
+        # c2g_array = scipy.misc.imresize(c2g_array, semantic_array.shape[:2], interp='nearest')
         return c2g_array, output_value_resized

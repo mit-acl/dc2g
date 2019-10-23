@@ -51,8 +51,9 @@ class Planner(object):
     def visualize(self):
         raise NotImplementedError
 
-    def setup_plots(self, make_individual_figures, plot_panels, save_panel_figures, save_individual_figures, make_video):
+    def setup_plots(self, make_individual_figures, make_panels, plot_panels, save_panel_figures, save_individual_figures, make_video):
         self.make_individual_figures = make_individual_figures
+        self.make_panels = make_panels
         self.plot_panels = plot_panels
         self.save_panel_figures = save_panel_figures
         self.save_individual_figures = save_individual_figures
@@ -120,13 +121,14 @@ class Planner(object):
 
             plt.figure("DC2G")
             plt.subplot(self.subplots["obs"])
-            plt.imshow(full_semantic_array)
+            plt.imshow(full_semantic_array, interpolation='nearest')
             # plt.imshow(render)
 
             if self.save_panel_figures or self.make_video:
                 plt.figure("DC2G")
                 plt.savefig(self.fig_filename("panels", "png"))
-            plt.pause(0.01)
+            # plt.pause(0.01)
+            plt.show()
         if self.save_individual_figures or self.make_video:
             # plt.imsave("{individual_figure_path}/results/environment/step_{step_num}.png".format(individual_figure_path=self.individual_figure_path, step_num=str(self.step_number).zfill(3)), render)
             plt.imsave(self.fig_filename("observation", "png"), full_semantic_array)
