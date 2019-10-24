@@ -47,6 +47,10 @@ class DC2GPlanner(Planner):
         print("loaded model.")
 
     def plan(self, obs):
+        self.path = [[obs['pos'][0]+i, obs['pos'][1]] for i in range(10)]
+        return 0
+
+
         self.step_number += 1
         traversable_array, _, _ = find_traversable_inds(obs['semantic_gridmap'], self.traversable_colors)
 

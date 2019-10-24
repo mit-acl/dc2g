@@ -99,29 +99,35 @@ class DC2G:
             return
         rospy.loginfo("[cbTimer] continuing...")
 
+        px = self.odom.pose.pose.position.x; py = self.odom.pose.pose.position.y
+        gx, gy = self.to_grid(px, py)
+        px2, py2 = self.to_coor(gx, gy)
+
+        print("True: ({:.2f}, {:.2f}), Est: ({:.2f}, {:.2f})".format(px, py, px2, py2))
+
         obs = self.make_obs()
         action = self.planner.plan(obs)
 
         if hasattr(self.planner, 'path'):
             self.visualizePlannedPath(self.planner.path)
 
-        if hasattr(self.planner, 'c2g_array'):
-            map_img = self.bridge.cv2_to_imgmsg(self.planner.c2g_array)
-            self.pub_map_debug.publish(map_img)
-        if hasattr(self.planner, 'planner_array'):
-            with open("{dir}/obs_{step_number}.pkl".format(dir=os.path.dirname(os.path.realpath(__file__)), step_number=str(self.planner.step_number)).zfill(3), "wb") as f:
-                pickle.dump(obs, f)
-            rgbImage = cv2.cvtColor((self.planner.planner_array*255.).astype(np.uint8), cv2.COLOR_RGBA2BGR)
-            map_img = self.bridge.cv2_to_imgmsg(rgbImage)
-            self.pub_map_debug2.publish(map_img)
+        # if hasattr(self.planner, 'c2g_array'):
+        #     map_img = self.bridge.cv2_to_imgmsg(self.planner.c2g_array)
+        #     self.pub_map_debug.publish(map_img)
+        # if hasattr(self.planner, 'planner_array'):
+        #     with open("{dir}/obs_{step_number}.pkl".format(dir=os.path.dirname(os.path.realpath(__file__)), step_number=str(self.planner.step_number)).zfill(3), "wb") as f:
+        #         pickle.dump(obs, f)
+        #     rgbImage = cv2.cvtColor((self.planner.planner_array*255.).astype(np.uint8), cv2.COLOR_RGBA2BGR)
+        #     map_img = self.bridge.cv2_to_imgmsg(rgbImage)
+        #     self.pub_map_debug2.publish(map_img)
 
-        twist_msg = self.actionToTwist(action)
-        self.pubCmdVel(twist_msg)
+        # twist_msg = self.actionToTwist(action)
+        # self.pubCmdVel(twist_msg)
 
     def visualizePlannedPath(self, path):
         marker = Marker()
         marker.header.stamp = rospy.Time.now()
-        marker.header.frame_id = 'world'
+        marker.header.frame_id = 'odom_ekf'
         marker.ns = 'planned_path'
         marker.id = 0
         marker.type = marker.LINE_STRIP
@@ -209,7 +215,7 @@ class DC2G:
         print("[make_obs]")
         # (p,q) = self.tf_listener.lookupTransform('/odom_ekf', '/realsense_color_optical_frame', rospy.Time(0))
         # px, py, pz = p
-        px = self.odom.pose.pose.position.x; py = self.odom.pose.pose.position.y
+        px = self.odom.pose.pose.position.y; py = self.odom.pose.pose.position.x
         print("px, py: {}, {}.".format(px, py))
         gx, gy = self.to_grid(px, py)
         print("gx, gy: {}, {}.".format(gx, gy))
@@ -282,7 +288,7 @@ class DC2G:
         next_states = np.empty((num_actions, state_dim))
         actions = [None for i in range(num_actions)]
         
-        smallest_forward_action = 0.5 # meters
+        smallest_forward_action = 1.0 # meters
         gridmap_discretization = int(smallest_forward_action/self.grid_resolution)
 
         for i in range(num_actions):
