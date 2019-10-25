@@ -8,7 +8,16 @@ data/datasets/driveways_bing_iros19/*
 !data/datasets/driveways_bing_iros19/full_semantic
 !data/datasets/driveways_bing_iros19/raw
 !data/datasets/driveways_bing_iros19/*.csv
-data/trained_networks
+
+*.tfevents.*
+options.json
+index.html
+graph.pbtxt
+validation_logs.p
+test_images/
+driveways_bing_iros19_masked
+driveways_bing_iros19_masked2
+driveways_bing_iros19_presentation
 
 logs/
 venv/
