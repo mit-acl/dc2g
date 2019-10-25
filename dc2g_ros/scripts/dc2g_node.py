@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from std_msgs.msg import ColorRGBA
-from geometry_msgs.msg import PoseStamped, Twist, Vector3, Point
+from geometry_msgs.msg import PoseStamped, Twist, Vector3, Point, Quaternion
 from visualization_msgs.msg import Marker
 import numpy as np
 import cv2
@@ -24,6 +24,7 @@ class DC2G:
         self.non_ros_mode = non_ros_mode
 
         self.odom = None
+        self.map_frame_id = None
 
         self.bridge = CvBridge()
 
@@ -71,11 +72,12 @@ class DC2G:
         self.robot_linear_speed = rospy.get_param("~robot_linear_speed", 0.2)
         self.robot_angular_speed = rospy.get_param("~robot_angular_speed", 0.3)
 
-        self.sub_pose = rospy.Subscriber("~pose", Odometry, self.cbPose)
+        self.pub_goal = rospy.Publisher("~goal", PoseStamped, queue_size=1)
         self.pub_cmd_vel = rospy.Publisher("~cmd_vel", Twist, queue_size=1)
         self.pub_map_debug = rospy.Publisher("~map_debug", Image, queue_size=1)
         self.pub_map_debug2 = rospy.Publisher("~map_debug2", Image, queue_size=1)
         self.pub_planned_path_marker = rospy.Publisher("~planned_path_marker", Marker, queue_size=1)
+        self.sub_pose = rospy.Subscriber("~pose", Odometry, self.cbPose)
 
         self.semantic_map_image_sub = message_filters.Subscriber("/octomap_map2d_image", Image,
                                             queue_size=1, buff_size=20*500*500)
@@ -99,18 +101,13 @@ class DC2G:
             return
         rospy.loginfo("[cbTimer] continuing...")
 
-        px = self.odom.pose.pose.position.x; py = self.odom.pose.pose.position.y
-        gx, gy = self.to_grid(px, py)
-        px2, py2 = self.to_coor(gx, gy)
-
-        print("True: ({:.2f}, {:.2f}), Est: ({:.2f}, {:.2f})".format(px, py, px2, py2))
-
         obs = self.make_obs()
         action = self.planner.plan(obs)
 
         if hasattr(self.planner, 'path'):
             self.visualizePlannedPath(self.planner.path)
-
+            goal = self.path_to_goal_pose(self.planner.path)
+            self.pub_goal.publish(goal)
         # if hasattr(self.planner, 'c2g_array'):
         #     map_img = self.bridge.cv2_to_imgmsg(self.planner.c2g_array)
         #     self.pub_map_debug.publish(map_img)
@@ -121,13 +118,29 @@ class DC2G:
         #     map_img = self.bridge.cv2_to_imgmsg(rgbImage)
         #     self.pub_map_debug2.publish(map_img)
 
+
         # twist_msg = self.actionToTwist(action)
         # self.pubCmdVel(twist_msg)
+
+    def path_to_goal_pose(self, path):
+        if self.map_frame_id:
+            goal_cell = path[-1]
+            gx, gy = self.to_coor(goal_cell[0], goal_cell[1])
+            gth = theta_ind_to_theta(goal_cell[2]) if len(goal_cell) > 2 else 0
+            gquat = quaternion_from_euler(0, 0, gth)
+
+            goal = PoseStamped()
+            goal.header.frame_id = self.map_frame_id
+            goal.header.stamp = rospy.Time.now()
+            goal.pose.position.x = gx
+            goal.pose.position.y = gy
+            goal.pose.orientation = Quaternion(*gquat)
+            return goal
 
     def visualizePlannedPath(self, path):
         marker = Marker()
         marker.header.stamp = rospy.Time.now()
-        marker.header.frame_id = 'odom_ekf'
+        marker.header.frame_id = self.map_frame_id
         marker.ns = 'planned_path'
         marker.id = 0
         marker.type = marker.LINE_STRIP
@@ -198,6 +211,7 @@ class DC2G:
 
         '''
         print("Got semantic map pair.")
+        self.map_frame_id = image_msg.header.frame_id
         self.lower_grid_x_min = info_msg.data[-3]
         self.lower_grid_y_min = info_msg.data[-2]
         self.grid_resolution = info_msg.data[-1]
@@ -215,7 +229,7 @@ class DC2G:
         print("[make_obs]")
         # (p,q) = self.tf_listener.lookupTransform('/odom_ekf', '/realsense_color_optical_frame', rospy.Time(0))
         # px, py, pz = p
-        px = self.odom.pose.pose.position.y; py = self.odom.pose.pose.position.x
+        px = self.odom.pose.pose.position.x; py = self.odom.pose.pose.position.y
         print("px, py: {}, {}.".format(px, py))
         gx, gy = self.to_grid(px, py)
         print("gx, gy: {}, {}.".format(gx, gy))
