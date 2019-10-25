@@ -15,6 +15,9 @@ index.html
 graph.pbtxt
 validation_logs.p
 test_images/
+driveways_bing_iros19_masked
+driveways_bing_iros19_masked2
+driveways_bing_iros19_presentation
 
 logs/
 venv/
