@@ -99,12 +99,6 @@ class DC2G:
             return
         rospy.loginfo("[cbTimer] continuing...")
 
-        px = self.odom.pose.pose.position.x; py = self.odom.pose.pose.position.y
-        gx, gy = self.to_grid(px, py)
-        px2, py2 = self.to_coor(gx, gy)
-
-        print("True: ({:.2f}, {:.2f}), Est: ({:.2f}, {:.2f})".format(px, py, px2, py2))
-
         obs = self.make_obs()
         action = self.planner.plan(obs)
 
@@ -215,7 +209,7 @@ class DC2G:
         print("[make_obs]")
         # (p,q) = self.tf_listener.lookupTransform('/odom_ekf', '/realsense_color_optical_frame', rospy.Time(0))
         # px, py, pz = p
-        px = self.odom.pose.pose.position.y; py = self.odom.pose.pose.position.x
+        px = self.odom.pose.pose.position.x; py = self.odom.pose.pose.position.y
         print("px, py: {}, {}.".format(px, py))
         gx, gy = self.to_grid(px, py)
         print("gx, gy: {}, {}.".format(gx, gy))
