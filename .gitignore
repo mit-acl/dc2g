@@ -7,6 +7,7 @@ results
 data/datasets/driveways_bing_iros19/*
 !data/datasets/driveways_bing_iros19/full_semantic
 !data/datasets/driveways_bing_iros19/raw
+!data/datasets/driveways_bing_iros19/full_c2g
 !data/datasets/driveways_bing_iros19/*.csv
 
 *.tfevents.*
