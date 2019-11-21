@@ -47,9 +47,8 @@ class DC2GPlanner(Planner):
         print("loaded model.")
 
     def plan(self, obs):
-        self.path = [[obs['pos'][0]+i, obs['pos'][1]] for i in range(10)]
-        return 0
-
+        # self.path = [[obs['pos'][0]+i, obs['pos'][1]] for i in range(10)]
+        # return 0
 
         self.step_number += 1
         traversable_array, _, _ = find_traversable_inds(obs['semantic_gridmap'], self.traversable_colors)
@@ -85,7 +84,7 @@ class DC2GPlanner(Planner):
                 action, path = self.dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, bfs_parent_dict, traversable_array)
         self.path = path
         self.plot(obs['semantic_gridmap'])
-        return action
+        return action, path
 
     def visualize(self):
         raise NotImplementedError
@@ -111,6 +110,7 @@ class DC2GPlanner(Planner):
 
         # plt.imshow(c2g_array, cmap='gray', vmin=0, vmax=255)
         # plt.show()
+
 
         self.c2g_array = c2g_array
 
