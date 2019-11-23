@@ -14,9 +14,6 @@ def eval_progress(env, agent, n_eval, log, tb_writer, args):
         obs = preprocess_obs(obs)
 
         while True:
-            if total_eps % 100 == 0 and i_eval == 0:
-                env.render()
-
             # Select action
             action = agent.select_deterministic_action(obs)
 
