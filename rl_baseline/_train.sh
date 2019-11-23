@@ -20,7 +20,8 @@ source venv/bin/activate
 pip3 install -r requirements.txt
 
 # Add PYTHONPATH
-export PYTHONPATH=$DIR/gym-minigrid:$PYTHONPATH
+export PYTHONPATH=$DIR/../gym-minigrid:$PYTHONPATH
+export PYTHONPATH=$DIR/..:$PYTHONPATH
 
 # Train tf 
 print_header "Training network"
