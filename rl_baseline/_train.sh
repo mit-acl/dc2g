@@ -8,11 +8,6 @@ function print_header(){
 # Directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" 
 
-# Tensorboard
-pkill tensorboard
-# rm -rf logs/tb*
-tensorboard --logdir logs/ &
-
 # Virtualenv
 cd $DIR
 virtualenv venv
