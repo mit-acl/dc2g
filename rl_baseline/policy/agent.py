@@ -61,3 +61,6 @@ class Agent(PolicyBase):
 
         self.tb_writer.add_scalars(
             "loss/critic", {self.name: debug["critic_loss"]}, total_timesteps)
+
+    def save(self, episode):
+        self.policy.save("critic_" + str(episode), "./pytorch_models")

@@ -84,3 +84,6 @@ def train(agent, env, log, tb_writer, args):
 
         # Update policy
         agent.update_policy(total_timesteps=total_timesteps)
+
+        if total_eps % 1000 == 0:
+            agent.save(total_eps)
