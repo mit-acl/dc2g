@@ -1,7 +1,6 @@
 from misc.utils import preprocess_obs
 
-total_timesteps = 0
-total_eps = 0
+total_timesteps, total_eps = 0, 0
 
 
 def eval_progress(env, agent, n_eval, log, tb_writer, args):
@@ -14,12 +13,23 @@ def eval_progress(env, agent, n_eval, log, tb_writer, args):
         obs = preprocess_obs(obs)
 
         while True:
+            if total_eps % 200 == 0:
+                env.render()
+
             # Select action
             action = agent.select_deterministic_action(obs)
 
             # Take action in env
             new_obs, reward, done, _ = env.step(action)
             new_obs = preprocess_obs(new_obs)
+
+            # Add experience to memory
+            agent.add_memory(
+                obs=obs,
+                new_obs=new_obs,
+                action=action,
+                reward=reward,
+                done=False)
 
             # For next timestep
             obs = new_obs
@@ -56,7 +66,7 @@ def collect_one_traj(agent, env, log, args, tb_writer):
             new_obs=new_obs,
             action=action,
             reward=reward,
-            done=done)
+            done=False)
 
         # For next timestep
         obs = new_obs
@@ -77,7 +87,7 @@ def train(agent, env, log, tb_writer, args):
     while True:
         # Measure performance for reporting results in paper
         if total_eps % 50 == 0:
-            eval_progress(env=env, agent=agent, n_eval=10, log=log, tb_writer=tb_writer, args=args)
+            eval_progress(env=env, agent=agent, n_eval=1, log=log, tb_writer=tb_writer, args=args)
 
         # Collect one trajectory
         collect_one_traj(agent=agent, env=env, log=log, args=args, tb_writer=tb_writer)
@@ -85,5 +95,5 @@ def train(agent, env, log, tb_writer, args):
         # Update policy
         agent.update_policy(total_timesteps=total_timesteps)
 
-        if total_eps % 1000 == 0:
+        if total_eps % 500 == 0:
             agent.save(total_eps)

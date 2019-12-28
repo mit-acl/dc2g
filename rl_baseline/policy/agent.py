@@ -11,11 +11,9 @@ class Agent(PolicyBase):
         self.set_dim()
         self.set_policy()
         self.memory = ReplayBuffer()
-        self.epsilon = 1  # For exploration
+        self.epsilon = 0.5  # For exploration
 
     def set_dim(self):
-        # TODO Consider only semantic_gridmap for now
-        # TODO Add pos and theta
         self.input_dim = self.env.observation_space.spaces["semantic_gridmap"].shape
         self.output_dim = self.env.action_space.n
 
@@ -24,8 +22,8 @@ class Agent(PolicyBase):
         self.log[self.args.log_name].info("[{}] Output dim: {}".format(
             self.name, self.output_dim))
 
-    def select_deterministic_action(self, obs, display=False):
-        action = self.policy.select_action(obs, display)
+    def select_deterministic_action(self, obs):
+        action = self.policy.select_action(obs)
         assert not np.isnan(action).any()
 
         return action
@@ -38,8 +36,8 @@ class Agent(PolicyBase):
             # Exploration
             action = np.random.randint(low=0, high=self.output_dim, size=(1,))
 
-            if self.epsilon > 0.1:
-                self.epsilon *= 0.99995  # Reduce epsilon over time
+            if self.epsilon > 0.25:
+                self.epsilon *= 0.99999  # Reduce epsilon over time
 
         assert not np.isnan(action).any()
 
@@ -57,7 +55,7 @@ class Agent(PolicyBase):
     def update_policy(self, total_timesteps):
         debug = self.policy.train(
             replay_buffer=self.memory,
-            iterations=10)
+            iterations=50)
 
         self.tb_writer.add_scalars(
             "loss/critic", {self.name: debug["critic_loss"]}, total_timesteps)

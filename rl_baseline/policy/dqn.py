@@ -14,40 +14,60 @@ class Critic(nn.Module):
         super(Critic, self).__init__()
         width, height, channel = self._decompose_input_dim(input_dim)
 
-        setattr(self, name + "_conv1", nn.Conv2d(channel, 16, kernel_size=5, stride=2))
-        setattr(self, name + "_bn1", nn.BatchNorm2d(16))
-        setattr(self, name + "_conv2", nn.Conv2d(16, 32, kernel_size=5, stride=2))
-        setattr(self, name + "_bn2", nn.BatchNorm2d(32))
-        setattr(self, name + "_conv3", nn.Conv2d(32, 32, kernel_size=5, stride=2))
-        setattr(self, name + "_bn3", nn.BatchNorm2d(32))
+        # setattr(self, name + "_conv1", nn.Conv2d(channel, 16, kernel_size=3, stride=2))
+        # setattr(self, name + "_bn1", nn.BatchNorm2d(16))
+        # setattr(self, name + "_conv2", nn.Conv2d(16, 32, kernel_size=3, stride=2))
+        # setattr(self, name + "_bn2", nn.BatchNorm2d(32))
+        # setattr(self, name + "_conv3", nn.Conv2d(32, 32, kernel_size=3, stride=2))
+        # setattr(self, name + "_bn3", nn.BatchNorm2d(32))
 
         # Number of Linear input connections depends on output of conv2d layers
         # and therefore the input image size, so compute it.
         # Ref: https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
-        for i_conv in range(3):
-            kernel_size = getattr(self, name + "_conv" + str(i_conv + 1)).kernel_size[0]
-            stride = getattr(self, name + "_conv" + str(i_conv + 1)).stride[0]
-            width = self._conv2d_size_out(width, kernel_size, stride)
+        # for i_conv in range(2):
+        #     kernel_size = getattr(self, name + "_conv" + str(i_conv + 1)).kernel_size[0]
+        #     stride = getattr(self, name + "_conv" + str(i_conv + 1)).stride[0]
+        #     width = self._conv2d_size_out(width, kernel_size, stride)
 
-        for i_conv in range(3):
-            kernel_size = getattr(self, name + "_conv" + str(i_conv + 1)).kernel_size[0]
-            stride = getattr(self, name + "_conv" + str(i_conv + 1)).stride[0]
-            height = self._conv2d_size_out(height, kernel_size, stride)
+        # for i_conv in range(2):
+        #     kernel_size = getattr(self, name + "_conv" + str(i_conv + 1)).kernel_size[0]
+        #     stride = getattr(self, name + "_conv" + str(i_conv + 1)).stride[0]
+        #     height = self._conv2d_size_out(height, kernel_size, stride)
 
-        linear_input_size = width * height * 32
-        setattr(self, name + "_fc", nn.Linear(linear_input_size, output_dim))
+        # linear_input_size = width * height * 32 + 3  # +3 for adding pos and theta
+        linear_input_size = 3  # +3 for adding pos and theta
+        setattr(self, name + "_fc1", nn.Linear(linear_input_size, 64))
+        setattr(self, name + "_fc2", nn.Linear(64, 64))
+        setattr(self, name + "_fc3", nn.Linear(64, output_dim))
 
         self.name = name
 
     def forward(self, x):
-        batch_size = x.shape[0]
-        for i_conv in range(3):
-            x = getattr(self, self.name + "_conv" + str(i_conv + 1))(x)
-            x = getattr(self, self.name + "_bn" + str(i_conv + 1))(x)
-            x = F.relu(x)
+        # gridmap = x["gridmap"]
+        pos = x["pos"]
+        theta = x["theta"]
+        # batch_size = x["gridmap"].shape[0]
 
-        x = x.view(batch_size, -1)  # Concat output of conv
-        return getattr(self, self.name + "_fc")(x)
+        # # Pass through conv
+        # for i_conv in range(2):
+        #     if i_conv == 0:
+        #         x = gridmap
+        #     x = getattr(self, self.name + "_conv" + str(i_conv + 1))(x)
+        #     x = getattr(self, self.name + "_bn" + str(i_conv + 1))(x)
+        #     x = F.relu(x)
+
+        # x = x.view(batch_size, -1)
+
+        # Pass through fc
+        x = torch.cat((pos, theta), 1)
+        # x = torch.cat((x, pos, theta), 1)
+        x = getattr(self, self.name + "_fc1")(x)
+        x = F.relu(x)
+        x = getattr(self, self.name + "_fc2")(x)
+        x = F.relu(x)
+        x = getattr(self, self.name + "_fc3")(x)
+
+        return x
 
     def _decompose_input_dim(self, input_dim):
         """Decompose input dim w.r.t. (width, height, channel)
@@ -74,14 +94,27 @@ class DQN(object):
         self.name = name
         self.args = args
 
-    def select_action(self, state, display=False):
-        state = torch.FloatTensor(state).unsqueeze(0).to(device)  # Add a batch dimension
+    def to_torch(self, state):
+        if len(state["pos"].shape) > 1:
+            # gridmap = torch.FloatTensor(state["gridmap"]).to(device)
+            pos = torch.FloatTensor(state["pos"]).to(device)
+            theta = torch.from_numpy(state["theta"]).float().unsqueeze(1).to(device)
+        else:
+            # gridmap = torch.FloatTensor(state["gridmap"]).unsqueeze(0).to(device)
+            pos = torch.FloatTensor(state["pos"]).unsqueeze(0).to(device)
+            theta = torch.from_numpy(state["theta"]).float().unsqueeze(0).unsqueeze(0).to(device)
+
+        return {
+            # "gridmap": gridmap,
+            "pos": pos,
+            "theta": theta}
+
+    def select_action(self, state):
+        state = self.to_torch(state)
 
         logits = self.critic(state)
         logits = logits.cpu().data.numpy()
         logits = np.squeeze(logits, axis=0)
-        if display:
-            print(logits)
 
         return np.argmax(logits)
 
@@ -92,8 +125,8 @@ class DQN(object):
         for it in range(iterations):
             # Sample replay buffer 
             x, y, u, r, d = replay_buffer.sample(self.args.batch_size)
-            state = torch.FloatTensor(x).to(device)
-            next_state = torch.FloatTensor(y).to(device)
+            state = self.to_torch(x)
+            next_state = self.to_torch(y)
             action = torch.LongTensor(u).to(device)
             reward = torch.FloatTensor(r).to(device)
             done = torch.FloatTensor(1 - d).to(device)
@@ -106,7 +139,8 @@ class DQN(object):
             state_Q = self.critic(state).gather(1, action)
 
             # Compute critic loss
-            critic_loss = F.smooth_l1_loss(state_Q, target_Q)
+            # critic_loss = F.smooth_l1_loss(state_Q, target_Q)
+            critic_loss = F.mse_loss(state_Q, target_Q)
 
             # Optimize the critic
             self.critic_optimizer.zero_grad()
@@ -116,8 +150,9 @@ class DQN(object):
             debug["critic_loss"] += critic_loss.cpu().data.numpy().flatten()
 
             # Update the frozen target models
-            for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
-                target_param.data.copy_(self.args.tau * param.data + (1 - self.args.tau) * target_param.data)
+            if it % 2 == 0:
+                for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
+                    target_param.data.copy_(self.args.tau * param.data + (1 - self.args.tau) * target_param.data)
 
         return debug
 
@@ -138,6 +173,4 @@ class DQN(object):
             critic_weight_fixed[name_fixed] = v
 
         self.critic.load_state_dict(critic_weight_fixed)
-
-        self.actor_target.load_state_dict(self.actor.state_dict())
         self.critic_target.load_state_dict(self.critic.state_dict())

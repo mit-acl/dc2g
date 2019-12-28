@@ -48,6 +48,23 @@ def preprocess_obs(obs):
     """Preprocess obs
     Grap semantic_gridmap and transpose into torch order: 
     (channel, height, width) assuming (width, height, channel) as input
+    Additionally, obtain pos and theta
     """
-    obs = obs["semantic_gridmap"]
-    return np.swapaxes(obs, 0, 2)
+    # Normalize pos
+    pos_x, pos_y = obs["pos"]
+    pos_x = (pos_x - 25) / 50.
+    pos_y = (pos_y - 25) / 50.
+    pos = np.array([pos_x, pos_y])
+    assert pos_x <= 1.
+    assert pos_x >= -1.
+    assert pos_y <= 1.
+    assert pos_y >= -1.
+
+    # Normalize theta
+    theta = np.array(obs["theta"] / 3.5)
+    assert theta <= 1.
+    assert theta >= -1.
+
+    return {
+        # "gridmap": np.swapaxes(obs["semantic_gridmap"], 0, 2),
+        "pos": pos, "theta": theta}

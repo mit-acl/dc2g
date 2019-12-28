@@ -44,7 +44,7 @@ if __name__ == "__main__":
         "--tau", default=0.01, type=float, 
         help="Target network update rate")
     parser.add_argument(
-        "--batch-size", default=50, type=int, 
+        "--batch-size", default=128, type=int, 
         help="Batch size for both actor and critic")
     parser.add_argument(
         "--policy-freq", default=2, type=int,
