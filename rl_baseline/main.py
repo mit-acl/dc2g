@@ -56,9 +56,6 @@ if __name__ == "__main__":
         "--critic-lr", default=0.001, type=float,
         help="Learning rate for critic")
     parser.add_argument(
-        "--n-hidden", default=200, type=int,
-        help="Number of hidden units")
-    parser.add_argument(
         "--discount", default=0.99, type=float, 
         help="Discount factor")
 

@@ -50,6 +50,9 @@ def preprocess_obs(obs):
     (channel, height, width) assuming (width, height, channel) as input
     Additionally, obtain pos and theta
     """
+    # Get gridmap
+    gridmap = np.swapaxes(obs["semantic_gridmap"], 0, 2)
+
     # Normalize pos
     pos_x, pos_y = obs["pos"]
     pos_x = (pos_x - 25) / 50.
@@ -65,6 +68,4 @@ def preprocess_obs(obs):
     assert theta <= 1.
     assert theta >= -1.
 
-    return {
-        # "gridmap": np.swapaxes(obs["semantic_gridmap"], 0, 2),
-        "pos": pos, "theta": theta}
+    return {"gridmap": gridmap, "pos": pos, "theta": theta}
