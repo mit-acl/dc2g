@@ -51,7 +51,8 @@ def preprocess_obs(obs):
     Additionally, obtain pos and theta
     """
     # Get gridmap
-    gridmap = np.swapaxes(obs["semantic_gridmap"], 0, 2)
+    # gridmap = np.swapaxes(obs["semantic_gridmap"], 0, 2)
+    gridmap = np.zeros((3, 50, 50))
 
     # Normalize pos
     pos_x, pos_y = obs["pos"]
