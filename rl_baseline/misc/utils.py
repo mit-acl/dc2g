@@ -1,4 +1,5 @@
 import torch
+import copy
 import gym
 import logging
 import numpy as np
@@ -50,22 +51,19 @@ def preprocess_obs(obs):
     (channel, height, width) assuming (width, height, channel) as input
     Additionally, obtain pos and theta
     """
-    # Get gridmap
-    gridmap = np.swapaxes(obs["semantic_gridmap"], 0, 2)
+    # Color gridmap with agent location
+    pos_x, pos_y = copy.deepcopy(obs["pos"])
+    gridmap = copy.deepcopy(obs["semantic_gridmap"])
+    gridmap[pos_y, pos_x, 0] = 1
+    gridmap[pos_y, pos_x, 1] = 1
+    gridmap[pos_y, pos_x, 2] = 1
 
-    # Normalize pos
-    pos_x, pos_y = obs["pos"]
-    pos_x = (pos_x - 25) / 50.
-    pos_y = (pos_y - 25) / 50.
-    pos = np.array([pos_x, pos_y])
-    assert pos_x <= 1.
-    assert pos_x >= -1.
-    assert pos_y <= 1.
-    assert pos_y >= -1.
+    # Get gridmap
+    gridmap = np.swapaxes(gridmap, 0, 2)
 
     # Normalize theta
-    theta = np.array(obs["theta"] / 3.5)
+    theta = np.array(copy.deepcopy(obs["theta"]) / 3.5)
     assert theta <= 1.
     assert theta >= -1.
 
-    return {"gridmap": gridmap, "pos": pos, "theta": theta}
+    return {"gridmap": gridmap, "theta": theta}

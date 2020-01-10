@@ -24,25 +24,23 @@ class ReplayBuffer(object):
 
     def add(self, data):
         # Expects tuples of (state, next_state, action, reward, done)
-        if len(self.storage) > 4e5:
+        if len(self.storage) > 1.2e5:
             self.storage.pop(0)
         self.storage.append(data)
 
     def sample(self, batch_size):
         ind = np.random.randint(0, len(self.storage), size=batch_size)
-        x_gridmap, x_pos, x_theta = [], [], []
-        y_gridmap, y_pos, y_theta = [], [], []
+        x_gridmap, x_theta = [], []
+        y_gridmap, y_theta = [], []
         u, r, d = [], [], []
 
         for i in ind: 
             X, Y, U, R, D = self.storage[i]
 
             x_gridmap.append(np.array(X["gridmap"], copy=False))
-            x_pos.append(np.array(X["pos"], copy=False))
             x_theta.append(np.array(X["theta"], copy=False))
 
             y_gridmap.append(np.array(Y["gridmap"], copy=False))
-            y_pos.append(np.array(Y["pos"], copy=False))
             y_theta.append(np.array(Y["theta"], copy=False))
 
             u.append(np.array(U, copy=False))
@@ -50,15 +48,13 @@ class ReplayBuffer(object):
             d.append(np.array(D, copy=False))
 
         x_gridmap = np.array(x_gridmap)
-        x_pos = np.array(x_pos)
         x_theta = np.array(x_theta)
 
         y_gridmap = np.array(y_gridmap)
-        y_pos = np.array(y_pos)
         y_theta = np.array(y_theta)
 
-        x = {"gridmap": x_gridmap, "pos": x_pos, "theta": x_theta}
-        y = {"gridmap": y_gridmap, "pos": y_pos, "theta": y_theta}
+        x = {"gridmap": x_gridmap, "theta": x_theta}
+        y = {"gridmap": y_gridmap, "theta": y_theta}
 
         return \
             x, y, np.asarray(u, dtype=np.int64).reshape(-1, 1), \

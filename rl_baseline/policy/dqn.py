@@ -34,7 +34,7 @@ class Critic(nn.Module):
             stride = getattr(self, name + "_conv" + str(i_conv + 1)).stride[0]
             height = self._conv2d_size_out(height, kernel_size, stride)
 
-        linear_input_size = width * height * 32 + 3  # +3 for adding pos and theta
+        linear_input_size = width * height * 32 + 1  # +1 for adding theta
         setattr(self, name + "_fc1", nn.Linear(linear_input_size, 64))
         setattr(self, name + "_fc2", nn.Linear(64, 64))
         setattr(self, name + "_fc3", nn.Linear(64, output_dim))
@@ -43,7 +43,6 @@ class Critic(nn.Module):
 
     def forward(self, x):
         gridmap = x["gridmap"]
-        pos = x["pos"]
         theta = x["theta"]
         batch_size = x["gridmap"].shape[0]
 
@@ -57,7 +56,7 @@ class Critic(nn.Module):
         x = x.view(batch_size, -1)
 
         # Pass through fc
-        x = torch.cat((x, pos, theta), 1)
+        x = torch.cat((x, theta), 1)
         x = getattr(self, self.name + "_fc1")(x)
         x = F.relu(x)
         x = getattr(self, self.name + "_fc2")(x)
@@ -92,16 +91,14 @@ class DQN(object):
         self.args = args
 
     def to_torch(self, state):
-        if len(state["pos"].shape) > 1:
+        if len(state["theta"].shape) > 0:
             gridmap = torch.FloatTensor(state["gridmap"]).to(device)
-            pos = torch.FloatTensor(state["pos"]).to(device)
             theta = torch.from_numpy(state["theta"]).float().unsqueeze(1).to(device)
         else:
             gridmap = torch.FloatTensor(state["gridmap"]).unsqueeze(0).to(device)
-            pos = torch.FloatTensor(state["pos"]).unsqueeze(0).to(device)
             theta = torch.from_numpy(state["theta"]).float().unsqueeze(0).unsqueeze(0).to(device)
 
-        return {"gridmap": gridmap, "pos": pos, "theta": theta}
+        return {"gridmap": gridmap, "theta": theta}
 
     def select_action(self, state):
         state = self.to_torch(state)
