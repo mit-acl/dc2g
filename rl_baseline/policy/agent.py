@@ -11,7 +11,7 @@ class Agent(PolicyBase):
         self.set_dim()
         self.set_policy()
         self.memory = ReplayBuffer()
-        self.epsilon = 0.5  # For exploration
+        self.epsilon = 1.0  # For exploration
 
     def set_dim(self):
         self.input_dim = self.env.observation_space.spaces["semantic_gridmap"].shape
@@ -36,7 +36,7 @@ class Agent(PolicyBase):
             # Exploration
             action = np.random.randint(low=0, high=self.output_dim, size=(1,))
 
-            if self.epsilon > 0.25:
+            if self.epsilon > 0.1:
                 self.epsilon *= 0.99999  # Reduce epsilon over time
 
         assert not np.isnan(action).any()
@@ -62,3 +62,6 @@ class Agent(PolicyBase):
 
     def save(self, episode):
         self.policy.save("critic_" + str(episode), "./pytorch_models")
+
+    def load(self, episode):
+        self.policy.load("critic_" + str(episode), "./pytorch_models")

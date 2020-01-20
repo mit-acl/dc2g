@@ -28,4 +28,5 @@ cd $DIR
 # Experiment
 python3.6 main.py \
 --env-name "MiniGrid-EmptySLAM-32x32-v0" \
+--test \
 --algorithm "DQN"

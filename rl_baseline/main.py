@@ -4,7 +4,6 @@ import os
 import numpy as np
 from misc.utils import set_log, make_env, set_policy
 from tensorboardX import SummaryWriter
-from trainer import train
 
 
 def main(args):
@@ -19,7 +18,7 @@ def main(args):
     log = set_log(args)
 
     # Create env
-    env = make_env(args)
+    env = make_env(log, args)
 
     # Set seeds
     env.seed(args.seed)
@@ -29,8 +28,12 @@ def main(args):
     # Initialize policy
     agent = set_policy(env, tb_writer, log, args, name=args.algorithm)
 
-    # Start train
-    train(agent=agent, env=env, log=log, tb_writer=tb_writer, args=args)
+    if args.test:
+        from tester import test
+        test(agent=agent, env=env, log=log, tb_writer=tb_writer, args=args)
+    else:
+        from trainer import train
+        train(agent=agent, env=env, log=log, tb_writer=tb_writer, args=args)
 
 
 if __name__ == "__main__":
@@ -47,12 +50,6 @@ if __name__ == "__main__":
         "--batch-size", default=128, type=int, 
         help="Batch size for both actor and critic")
     parser.add_argument(
-        "--policy-freq", default=2, type=int,
-        help="Frequency of delayed policy updates")
-    parser.add_argument(
-        "--actor-lr", default=0.0001, type=float,
-        help="Learning rate for actor")
-    parser.add_argument(
         "--critic-lr", default=0.001, type=float,
         help="Learning rate for critic")
     parser.add_argument(
@@ -68,6 +65,9 @@ if __name__ == "__main__":
         help="# of possible actions")
 
     # Misc
+    parser.add_argument(
+        "--test", action="store_true", 
+        help="If True, perform test")
     parser.add_argument(
         "--prefix", default="", type=str,
         help="Prefix for tb_writer and logging")

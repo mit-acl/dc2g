@@ -30,10 +30,11 @@ def set_log(args):
     return log
 
 
-def make_env(args):
+def make_env(log, args):
     import gym_minigrid  # noqa
     env = gym.make(args.env_name)
     env.set_difficulty_level('easy')
+    log[args.log_name].info("Environment file is: {}".format(env.world_image_filename))
 
     return env
 

@@ -24,7 +24,7 @@ class ReplayBuffer(object):
 
     def add(self, data):
         # Expects tuples of (state, next_state, action, reward, done)
-        if len(self.storage) > 1.2e5:
+        if len(self.storage) > 1.5e5:
             self.storage.pop(0)
         self.storage.append(data)
 
