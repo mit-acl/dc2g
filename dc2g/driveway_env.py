@@ -21,6 +21,7 @@ class DrivewayEnv(MiniGridEnv):
     """
 
     def __init__(self, size=8):
+        self.reset_on_init = False
         MiniGridEnv.__init__(
             self,
             grid_size=size,
@@ -28,9 +29,9 @@ class DrivewayEnv(MiniGridEnv):
             # max_steps=4*size*size,
             # Set this to True for maximum speed
             see_through_walls=False,
-            reset_on_init=False,
-            remember_seen_cells=True,
-            use_semantic_coloring=True
+            # reset_on_init=False,
+            # remember_seen_cells=True,
+            # use_semantic_coloring=True
         )
 
         # Observations are dictionaries containing an
@@ -63,9 +64,39 @@ class DrivewayEnv(MiniGridEnv):
 
         # Probably don't need to call self.reset(), since the process running
         # the env will need to capture the 1st obs anyway.
-        reset_on_init = False
-        if reset_on_init:
-            self.reset()
+        self.reset_on_init = False
+        self.reset()
+
+    def reset(self):
+        if not self.reset_on_init:
+            return
+        super().reset()
+        # # Current position and direction of the agent
+        # self.agent_pos = None
+        # self.agent_dir = None
+
+        # # Generate a new random grid at the start of each episode
+        # # To keep the same grid for each episode, call env.seed() with
+        # # the same seed before calling env.reset()
+        # self._gen_grid(self.width, self.height)
+
+        # # These fields should be defined by _gen_grid
+        # assert self.agent_pos is not None
+        # assert self.agent_dir is not None
+
+        # # Check that the agent doesn't overlap with an object
+        # start_cell = self.grid.get(*self.agent_pos)
+        # assert start_cell is None or start_cell.can_overlap()
+
+        # # Item picked up, being carried, initially nothing
+        # self.carrying = None
+
+        # # Step count since episode start
+        # self.step_count = 0
+
+        # # Return first observation
+        # obs = self.gen_obs()
+        # return obs
 
     def show_overlay(self):
         # plt.figure(0)
@@ -500,21 +531,16 @@ class DrivewayEnv32x32(DrivewayEnv):
         DrivewayEnv.__init__(self, size=50)
 
 register(
-    id='MiniGrid-EmptySLAM-6x6-v0',
-    entry_point='gym_minigrid.envs:DrivewayEnv6x6'
+    id='MiniGrid-DrivewayEnv-6x6-v0',
+    entry_point=DrivewayEnv6x6
 )
 
 register(
-    id='MiniGrid-EmptySLAM-8x8-v0',
-    entry_point='gym_minigrid.envs:DrivewayEnv'
+    id='MiniGrid-DrivewayEnv-16x16-v0',
+    entry_point=DrivewayEnv16x16
 )
 
 register(
-    id='MiniGrid-EmptySLAM-16x16-v0',
-    entry_point='gym_minigrid.envs:DrivewayEnv16x16'
-)
-
-register(
-    id='MiniGrid-EmptySLAM-32x32-v0',
-    entry_point='gym_minigrid.envs:DrivewayEnv32x32'
+    id='MiniGrid-DrivewayEnv-32x32-v0',
+    entry_point=DrivewayEnv32x32
 )

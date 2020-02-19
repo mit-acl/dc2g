@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 
 from dc2g.planners.util import instantiate_planner
 
+# TODO: Don't explicitly import this here, register these envs upon install
+import dc2g.driveway_env
+
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -129,7 +132,7 @@ def main():
         help="gym environment to load",
         # default='AirSim-v0'
         # default='House3D-RoomNav'
-        default='MiniGrid-EmptySLAM-32x32-v0'
+        default='MiniGrid-DrivewayEnv-32x32-v0'
     )
     parser.add_option(
         "-p",
@@ -137,10 +140,10 @@ def main():
         dest="planner",
         help="name of planner to use (e.g. dc2g, frontier)",
         # default='dc2g_without_semantics'
-        default='dc2g'
+        # default='dc2g'
         # default='dc2g_rescale'
         # default='frontier'
-        # default='oracle'
+        default='oracle'
     )
     parser.add_option(
         "-s",
