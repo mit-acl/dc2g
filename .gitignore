@@ -11,14 +11,15 @@ data/datasets/driveways_bing_iros19/*
 !data/datasets/driveways_bing_iros19/*.csv
 
 *.tfevents.*
-options.json
 index.html
 graph.pbtxt
 validation_logs.p
 test_images/
-driveways_bing_iros19_masked
-driveways_bing_iros19_masked2
-driveways_bing_iros19_presentation
+/driveways_bing_iros19*
+data/trained_networks/driveways_bing_iros19_full_test_works/images
+data/trained_networks/driveways_bing_iros19_masked
+data/trained_networks/driveways_bing_iros19_masked2
+data/trained_networks/driveways_bing_iros19_presentation
 
 logs/
 venv/
