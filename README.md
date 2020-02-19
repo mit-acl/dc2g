@@ -16,7 +16,7 @@ Video: [https://youtu.be/yVlnbqEFct0](https://youtu.be/yVlnbqEFct0)
 - Bing Maps Driveway Dataset (~80 houses)
 - Pre-trained cost-to-go estimation network
 - Gridworld evaluation environment (built on gym-minigrid)
-- Jupyter Notebook to explain code
+- Jupyter Notebook to explain code (coming soon...)
 
 ### Install
 ```sh
@@ -53,8 +53,12 @@ python -m dc2g.run_episode -p dc2g
 **Environment code:**
 * `gym-minigrid` follows the OpenAI Gym API (`env.step`,`env.reset`, etc.) and the particular python script of interest here is `gym-minigrid/gym_minigrid/envs/slam.py`, which inherits from `gym-minigrid/gym_minigrid/minigrid.py` and gives extra capabilities to build up a map of the env over time.
 
+**Jupyter notebook:**
+Coming soon...
+
 ### TODOs
 
+- [ ] Create Jupyter notebook to explain code
 - [ ] Confirm `run_episode.py` works
 - [ ] Confirm `run_experiment.py` works
 - [ ] Confirm each planner works
