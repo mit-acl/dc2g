@@ -12,6 +12,11 @@ import numpy as np
 
 dir_path, _ = os.path.split(os.path.dirname(os.path.realpath(__file__)))
 
+class DrivewayGrid(Grid):
+    def __init__(self, width, height, remember_seen_cells, use_semantic_coloring):
+        Grid.__init__(self, width, height)
+        self.remember_seen_cells = remember_seen_cells
+        self.use_semantic_coloring = use_semantic_coloring
 
 class DrivewayEnv(MiniGridEnv):
     """
@@ -21,8 +26,12 @@ class DrivewayEnv(MiniGridEnv):
     """
 
     def __init__(self, size=8):
+        self.finished_init = False
+        self.reset_on_init = False
         self.grid_size = size
         self.reset_on_init = False
+        self.remember_seen_cells = True
+        self.use_semantic_coloring = True
         MiniGridEnv.__init__(
             self,
             grid_size=size,
@@ -67,39 +76,13 @@ class DrivewayEnv(MiniGridEnv):
 
         # Probably don't need to call self.reset(), since the process running
         # the env will need to capture the 1st obs anyway.
-        self.reset_on_init = False
         self.reset()
+        self.finished_init = True
 
     def reset(self):
-        if not self.reset_on_init:
+        if not self.reset_on_init and not self.finished_init:
             return
         super().reset()
-        # # Current position and direction of the agent
-        # self.agent_pos = None
-        # self.agent_dir = None
-
-        # # Generate a new random grid at the start of each episode
-        # # To keep the same grid for each episode, call env.seed() with
-        # # the same seed before calling env.reset()
-        # self._gen_grid(self.width, self.height)
-
-        # # These fields should be defined by _gen_grid
-        # assert self.agent_pos is not None
-        # assert self.agent_dir is not None
-
-        # # Check that the agent doesn't overlap with an object
-        # start_cell = self.grid.get(*self.agent_pos)
-        # assert start_cell is None or start_cell.can_overlap()
-
-        # # Item picked up, being carried, initially nothing
-        # self.carrying = None
-
-        # # Step count since episode start
-        # self.step_count = 0
-
-        # # Return first observation
-        # obs = self.gen_obs()
-        # return obs
 
     def _rand_choice(self, choices):
         """
@@ -198,7 +181,7 @@ class DrivewayEnv(MiniGridEnv):
 
     def _gen_grid(self, width, height):
         # Create an empty grid
-        self.grid = Grid(width, height, remember_seen_cells=self.remember_seen_cells, use_semantic_coloring=self.use_semantic_coloring)
+        self.grid = DrivewayGrid(width, height, remember_seen_cells=self.remember_seen_cells, use_semantic_coloring=self.use_semantic_coloring)
 
         self.orig_world_array = resize(plt.imread(self.world_image_filename), (height,width,3), order=0)
         assert height == self.orig_world_array.shape[0], "height of loaded world doesn't match gridworld size"
@@ -217,7 +200,7 @@ class DrivewayEnv(MiniGridEnv):
             "driveway": Driveway,
             "path": Path,
             "sidewalk": Sidewalk,
-            "front_door": Goal,
+            "front_door": FrontDoor,
             "house": House,
             "grass": Grass,
             "car": Car,
@@ -255,13 +238,19 @@ class DrivewayEnv(MiniGridEnv):
         self.world_array[goal_array == 1] = color
         # for i in range(len(inds[0])):
         i = 0
-        self.grid.set(inds[1][i], inds[0][i], obj_name(255.*np.array(color)))
+        goal_worldobj = obj_name(255.*np.array(color))
+        self.grid.set(inds[1][i], inds[0][i], goal_worldobj)
         self.goal_pos = [inds[1][i], inds[0][i]]
+
+        self.goal_worldobj_type = goal_worldobj.type
 
         # self.start_pos = np.array([inds[1][i]+1, inds[0][i]+1])
         # self.start_dir = 0
 
+        print('placing agent')
         self.place_agent(max_tries=500, reject_fn=reject_untraversable)
+        print('placed agent')
+        print('self.agent_pos: {}'.format(self.agent_pos))
         
         # self.place_agent(top=[9, 4], size=[5, 5], max_tries=500, reject_fn=reject_untraversable)
         # print("setting agent at {}, {}".format(self.start_pos, self.start_dir))
@@ -311,10 +300,12 @@ class DrivewayEnv(MiniGridEnv):
         self.camera_fov = np.pi/2 # full FOV in radians
         self.camera_range_meters = 10. # range of sensor horizon in meters
         self.world_size_m = np.array([100., 100.]) # meters of true world
-        self.grid_resolution_array = self.world_size_m / np.array([self.grid.width, self.grid.height]) # meters/gridcell
-        self.grid_resolution_array = self.world_size_m / np.array([self.grid.width, self.grid.height]) # meters/gridcell
-        self.camera_range_x = int(camera_range_meters / self.grid_resolution_array[0])  # range of sensor horizon in cells
-        self.camera_range_y = int(camera_range_meters / self.grid_resolution_array[1]) # range of sensor horizon in cells
+        grid_width = self.grid.width if hasattr(self, "grid") else self.grid_size
+        grid_height = self.grid.height if hasattr(self, "grid") else self.grid_size
+        self.grid_resolution_array = self.world_size_m / np.array([grid_width, grid_height]) # meters/gridcell
+        self.grid_resolution_array = self.world_size_m / np.array([grid_width, grid_height]) # meters/gridcell
+        self.camera_range_x = int(self.camera_range_meters / self.grid_resolution_array[0])  # range of sensor horizon in cells
+        self.camera_range_y = int(self.camera_range_meters / self.grid_resolution_array[1]) # range of sensor horizon in cells
 
         self.grid_resolution = 1
 
@@ -458,7 +449,7 @@ class DrivewayEnv(MiniGridEnv):
         """
         if sparse:
             new_cell = self.grid.get(*self.agent_pos)
-            if new_cell.type == "goal":
+            if new_cell.type == self.goal_worldobj_type:
                 reward = 10
             else:
                 reward = -0.01
@@ -511,11 +502,91 @@ class DrivewayEnv(MiniGridEnv):
             done = True
 
         new_cell = self.grid.get(*self.agent_pos)
-        if new_cell.type == 'goal':
+        if new_cell.type == self.goal_worldobj_type:
             print("Goal reached!")
             done = True
 
         return obs, reward, done, {}
+
+    def place_agent(
+        self,
+        top=None,
+        size=None,
+        rand_dir=True,
+        max_tries=np.inf,
+        reject_fn=None
+    ):
+        """
+        Set the agent's starting point at an empty position in the grid
+        """
+
+        self.agent_pos = None
+        pos = self.place_obj(None, top, size, max_tries=max_tries, reject_fn=reject_fn, ok_to_overlap=True)
+        self.agent_pos = pos
+
+        if rand_dir:
+            self.agent_dir = self._rand_int(0, 4)
+
+        return pos
+
+    def place_obj(self,
+        obj,
+        top=None,
+        size=None,
+        reject_fn=None,
+        max_tries=np.inf,
+        ok_to_overlap=False
+    ):
+        """
+        Place an object at an empty position in the grid
+
+        :param top: top-left position of the rectangle where to place
+        :param size: size of the rectangle where to place
+        :param reject_fn: function to filter out potential positions
+        """
+
+        if top is None:
+            top = (0, 0)
+
+        if size is None:
+            size = (self.grid.width, self.grid.height)
+
+        num_tries = 0
+
+        while True:
+            # This is to handle with rare cases where rejection sampling
+            # gets stuck in an infinite loop
+            if num_tries > max_tries:
+                raise RecursionError('rejection sampling failed in place_obj')
+
+            num_tries += 1
+
+            pos = np.array((
+                self._rand_int(top[0], top[0] + size[0]),
+                self._rand_int(top[1], top[1] + size[1])
+            ))
+
+            # Don't place the object on top of another object
+            if not ok_to_overlap and self.grid.get(*pos) != None:
+                continue
+
+            # Don't place the object where the agent is
+            if np.array_equal(pos, self.agent_pos):
+                continue
+
+            # Check if there is a filtering criterion
+            if reject_fn and reject_fn(self, pos):
+                continue
+
+            break
+
+        # self.grid.set(*pos, obj)
+
+        if obj is not None:
+            obj.init_pos = pos
+            obj.cur_pos = pos
+
+        return pos
 
 # keep angle between [-pi, pi]
 def wrap(angle):
@@ -559,3 +630,182 @@ register(
     id='MiniGrid-DrivewayEnv-32x32-v0',
     entry_point=DrivewayEnv32x32
 )
+
+# Number of cells (width and height) in the agent view
+AGENT_VIEW_SIZE = 5
+
+# Size of the array given as an observation to the agent
+OBS_ARRAY_SIZE = (AGENT_VIEW_SIZE, AGENT_VIEW_SIZE, 3)
+
+# Map of color names to RGB values
+COLORS = {
+    'red'   : np.array([255, 0, 0]),
+    'green' : np.array([0, 255, 0]),
+    'blue'  : np.array([0, 0, 255]),
+    'magenta'  : np.array([255, 0, 255]),
+    'purple': np.array([112, 39, 195]),
+    'yellow': np.array([255, 255, 0]),
+    'grey'  : np.array([100, 100, 100]),
+    'white' : np.array([255, 255, 255])
+}
+
+TRAVERSABLE_COLORS = {
+    True: 'white',
+    False: 'red'
+}
+
+COLOR_NAMES = sorted(list(COLORS.keys()))
+
+# Used to map colors to integers
+COLOR_TO_IDX = {
+    'red'   : 0,
+    'green' : 1,
+    'blue'  : 2,
+    'magenta': 3,
+    'purple': 4,
+    'yellow': 5,
+    'grey'  : 6
+}
+
+IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
+
+# Map of object type to integers
+OBJECT_TO_IDX = {
+    'empty':        0,
+    'wall':         1,
+    'floor':        2,
+    'door':         3,
+    'locked_door':  4,
+    'key':          5,
+    'ball':         6,
+    'box':          7,
+    'frontdoor':    8,
+    'sidewalk':     9,
+    'house':        10,
+    'road':         11,
+    'grass':        12,
+    'driveway':     13,
+    'path':         14,
+    'car':          15,
+    'blank':        16
+}
+
+# Map of object type to color names
+OBJECT_TO_COLOR = {
+    'front_door': 'yellow',
+    'sidewalk': 'blue',
+    'house':    'magenta',
+    'road':     'red',
+    'grass':    'green'
+}
+
+IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
+
+class GenericTerrain(WorldObj):
+    """
+    Colored grass tile the agent can walk over
+    """
+
+    def __init__(self, terrain_type, color, is_traversable=True):
+        self.is_traversable = is_traversable
+        self.type = terrain_type
+        assert terrain_type in OBJECT_TO_IDX, terrain_type
+        if type(color) == np.ndarray:
+            self.color = color
+        elif obj_type in OBJECT_TO_COLOR:
+            self.color = OBJECT_TO_COLOR[obj_type]
+            assert self.color in COLOR_TO_IDX, self.color
+        else:
+            self.color = color
+        self.contains = None
+
+        # Initial position of the object
+        self.init_pos = None
+
+        # Current position of the object
+        self.cur_pos = None
+
+        self.has_been_seen = False
+        self.has_been_visited = False
+
+    def can_overlap(self):
+        return True
+
+    def render(self, r):
+        # Give the floor a pale color
+        if type(self.color) == np.ndarray:
+            c = self.color
+        else:
+            c = COLORS[self.color]
+        # r.setLineColor(100, 100, 100, 0)
+        r.setLineColor(*c/2)
+        r.setColor(*c/2)
+        r.drawPolygon([
+            (1          , CELL_PIXELS),
+            (CELL_PIXELS, CELL_PIXELS),
+            (CELL_PIXELS,           1),
+            (1          ,           1)
+        ])
+
+class Grass(GenericTerrain):
+    def __init__(self, color=None):
+        GenericTerrain.__init__(self,
+            self.__class__.__name__.lower(), 
+            color=color,
+            is_traversable=False)
+
+class Driveway(GenericTerrain):
+    def __init__(self, color=None):
+        GenericTerrain.__init__(self,
+            self.__class__.__name__.lower(), 
+            color=color,
+            is_traversable=True)
+
+class Sidewalk(GenericTerrain):
+    def __init__(self, color=None):
+        GenericTerrain.__init__(self,
+            self.__class__.__name__.lower(), 
+            color=color,
+            is_traversable=True)
+
+class Road(GenericTerrain):
+    def __init__(self, color=None):
+        GenericTerrain.__init__(self,
+            self.__class__.__name__.lower(), 
+            color=color,
+            is_traversable=True)
+
+class Car(GenericTerrain):
+    def __init__(self, color=None):
+        GenericTerrain.__init__(self,
+            self.__class__.__name__.lower(), 
+            color=color,
+            is_traversable=False)
+
+class Blank(GenericTerrain):
+    def __init__(self, color=None):
+        GenericTerrain.__init__(self,
+            self.__class__.__name__.lower(), 
+            color=color,
+            is_traversable=False)
+
+class Path(GenericTerrain):
+    def __init__(self, color=None):
+        GenericTerrain.__init__(self,
+            self.__class__.__name__.lower(), 
+            color=color,
+            is_traversable=True)
+
+class House(GenericTerrain):
+    def __init__(self, color=None):
+        GenericTerrain.__init__(self,
+            self.__class__.__name__.lower(), 
+            color=color,
+            is_traversable=False)
+
+class FrontDoor(GenericTerrain):
+    def __init__(self, color=None):
+        GenericTerrain.__init__(self,
+            self.__class__.__name__.lower(), 
+            color=color,
+            is_traversable=False)

@@ -45,7 +45,7 @@ planner_args = {
 
 def instantiate_planner(planner, env, env_type,
     env_camera_fov=None, env_camera_range_x=None, env_camera_range_y=None, env_to_coor=None, env_next_coords=None, env_to_grid=None, env_grid_resolution=None,
-    env_render=None, env_world_image_filename=None,
+    env_render=None, env_world_image_filename=None, env_world_array=None,
     make_individual_figures=False, save_individual_figures=False, save_panel_figures=False, make_panels=True, plot_panels=True, make_video=False):
     
     for attr in ['camera_fov', 'camera_range_x', 'camera_range_y', 'to_coor', 'next_coords', 'to_grid', 'grid_resolution', 'render', 'world_image_filename']:
