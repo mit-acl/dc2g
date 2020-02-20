@@ -47,9 +47,19 @@ def instantiate_planner(planner, env, env_type,
     env_camera_fov=None, env_camera_range_x=None, env_camera_range_y=None, env_to_coor=None, env_next_coords=None, env_to_grid=None, env_grid_resolution=None,
     env_render=None, env_world_image_filename=None, env_world_array=None,
     make_individual_figures=False, save_individual_figures=False, save_panel_figures=False, make_panels=True, plot_panels=True, make_video=False):
-    
-    for attr in ['camera_fov', 'camera_range_x', 'camera_range_y', 'to_coor', 'next_coords', 'to_grid', 'grid_resolution', 'render', 'world_image_filename']:
-        exec('env_{} = env.{} if env_{} is None else env_{}'.format(attr, attr, attr, attr))
+
+    env_camera_fov = env.camera_fov if env_camera_fov is None else env_camera_fov
+    env_camera_range_x = env.camera_range_x if env_camera_range_x is None else env_camera_range_x
+    env_camera_range_y = env.camera_range_y if env_camera_range_y is None else env_camera_range_y
+    env_to_coor = env.to_coor if env_to_coor is None else env_to_coor
+    env_next_coords = env.next_coords if env_next_coords is None else env_next_coords
+    env_to_grid = env.to_grid if env_to_grid is None else env_to_grid
+    env_grid_resolution = env.grid_resolution if env_grid_resolution is None else env_grid_resolution
+    env_render = env.render if env_render is None else env_render
+    env_world_image_filename = env.world_image_filename if env_world_image_filename is None else env_world_image_filename
+
+    # for attr in ['camera_fov', 'camera_range_x', 'camera_range_y', 'to_coor', 'next_coords', 'to_grid', 'grid_resolution', 'render', 'world_image_filename']:
+    #     exec('env_{} = env.{} if env_{} is None else env_{}'.format(attr, attr, attr, attr, attr))
 
     dataset, render_mode, target, target_str, object_goal_names, room_goal_names, room_or_object_goal = setup_goal(env_type)
     traversable_colors = get_traversable_colors(dataset)

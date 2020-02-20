@@ -82,7 +82,7 @@ class DrivewayEnv(MiniGridEnv):
     def reset(self):
         if not self.reset_on_init and not self.finished_init:
             return
-        super().reset()
+        return super().reset()
 
     def _rand_choice(self, choices):
         """
@@ -247,10 +247,7 @@ class DrivewayEnv(MiniGridEnv):
         # self.start_pos = np.array([inds[1][i]+1, inds[0][i]+1])
         # self.start_dir = 0
 
-        print('placing agent')
         self.place_agent(max_tries=500, reject_fn=reject_untraversable)
-        print('placed agent')
-        print('self.agent_pos: {}'.format(self.agent_pos))
         
         # self.place_agent(top=[9, 4], size=[5, 5], max_tries=500, reject_fn=reject_untraversable)
         # print("setting agent at {}, {}".format(self.start_pos, self.start_dir))
@@ -746,6 +743,11 @@ class GenericTerrain(WorldObj):
             (CELL_PIXELS,           1),
             (1          ,           1)
         ])
+
+    def encode(self):
+        """Encode the a description of this object as a 3-tuple of integers"""
+        return (OBJECT_TO_IDX[self.type], 0, 0)
+        # return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0)
 
 class Grass(GenericTerrain):
     def __init__(self, color=None):

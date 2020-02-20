@@ -97,7 +97,6 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
     # env.use_semantic_coloring = planner_args[planner]['use_semantic_coloring']
     env.set_difficulty_level(difficulty_level)
     obs = reset_env(env)
-
     planner_obj = instantiate_planner(planner, env, env_type)
 
     while env.step_count < env.max_steps:

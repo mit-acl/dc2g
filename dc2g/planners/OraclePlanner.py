@@ -10,7 +10,6 @@ class OraclePlanner(Planner):
         super(OraclePlanner, self).__init__(name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render)
 
         # self.full_size_semantic_gridmap = env_world_array
-        print(world_image_filename)
         self.world_image_filename = world_image_filename
         self.full_size_semantic_gridmap = plt.imread(self.world_image_filename)
 
