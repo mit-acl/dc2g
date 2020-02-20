@@ -63,10 +63,10 @@ Coming soon...
 
 ### TODOs
 
-- [x] Get OraclePlanner working
-- [ ] Get FrontierPlanner working
-- [ ] Get DC2GPlanner working
-- [ ] Get DC2GRescalePlanner working
+- [x] Get OraclePlanner working again
+- [ ] Get FrontierPlanner working again
+- [ ] Get DC2GPlanner working again
+- [ ] Get DC2GRescalePlanner working again
 - [ ] Create Jupyter notebook to explain code
 - [ ] Confirm `run_episode.py` works
 - [ ] Confirm `run_experiment.py` works
