@@ -26,6 +26,7 @@ cd dc2g
 ```
 
 ### Run Example
+This will initialize the environment and run an episode with an Oracle planner:
 ```bash
 ./example.sh
 ```
@@ -62,11 +63,13 @@ Coming soon...
 
 ### TODOs
 
+- [x] Get OraclePlanner working
+- [ ] Get FrontierPlanner working
+- [ ] Get DC2GPlanner working
+- [ ] Get DC2GRescalePlanner working
 - [ ] Create Jupyter notebook to explain code
 - [ ] Confirm `run_episode.py` works
 - [ ] Confirm `run_experiment.py` works
-- [ ] Confirm each planner works
-- [ ] Confirm each planner works
 - [ ] Pull our custom `slam.py` code out of `gym-minigrid`
 - [ ] Add instructions for generating masked semantic/c2g images
 - [ ] Add scripts to generate plots from paper

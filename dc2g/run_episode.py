@@ -26,11 +26,11 @@ np.set_printoptions(threshold=np.inf)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-make_individual_figures = False
+make_individual_figures = True
 save_individual_figures = True
 save_panel_figures = False
-plot_panels = True
-make_video = True
+plot_panels = False
+make_video = False
 
 
 import sys, signal
@@ -109,6 +109,8 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
 
         # Execute the action in the environment and receive new observation
         obs, reward, done, info = env.step(action)
+
+        print(obs['pos'], obs['theta_ind'])
 
         # if env.step_count == 10:
         #     # planner_obj.animate_episode(fig_type="observation")

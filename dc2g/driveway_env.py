@@ -18,7 +18,15 @@ class DrivewayGrid(Grid):
         self.remember_seen_cells = remember_seen_cells
         self.use_semantic_coloring = use_semantic_coloring
 
+class DrivewayActions(IntEnum):
+    # These are diff from the MiniGridEnv. TODO: Make them consistent
+    forward = 0
+    left = 1
+    right = 2
+
 class DrivewayEnv(MiniGridEnv):
+    # Enumeration of possible actions
+
     """
     Empty grid environment, no obstacles, sparse reward
     Agent observes image of *entire* world, but only can "see" cells it has
@@ -32,6 +40,7 @@ class DrivewayEnv(MiniGridEnv):
         self.reset_on_init = False
         self.remember_seen_cells = True
         self.use_semantic_coloring = True
+        self.visited_cells = []
         MiniGridEnv.__init__(
             self,
             grid_size=size,
@@ -78,6 +87,7 @@ class DrivewayEnv(MiniGridEnv):
         # the env will need to capture the 1st obs anyway.
         self.reset()
         self.finished_init = True
+        self.actions = DrivewayActions
 
     def reset(self):
         if not self.reset_on_init and not self.finished_init:
@@ -259,40 +269,6 @@ class DrivewayEnv(MiniGridEnv):
 
         self.mission = "get to the yellow goal square"
 
-    def gen_obs_grid_square_fov(self): # Square observation grid
-        """
-        Generate the sub-grid observed by the agent.
-        This method also outputs a visibility mask telling us which grid
-        cells the agent can actually see.
-        """
-
-        topX, topY, botX, botY = self.get_view_exts()
-
-        grid = self.grid.slice(topX, topY, AGENT_VIEW_SIZE, AGENT_VIEW_SIZE)
-
-        for i in range(self.agent_dir + 1):
-            grid = grid.rotate_left()
-
-        # Process occluders and visibility
-        # Note that this incurs some performance cost
-        if not self.see_through_walls:
-            vis_mask = grid.process_vis(agent_pos=(AGENT_VIEW_SIZE // 2 , AGENT_VIEW_SIZE - 1))
-        else:
-            vis_mask = np.ones(shape=(grid.width, grid.height), dtype=np.bool)
-
-        # Make it so the agent sees what it's carrying
-        # We do this by placing the carried object at the agent's position
-        # in the agent's partially observable view
-        agent_pos = grid.width // 2, grid.height - 1
-        if self.carrying:
-            agent_i, agent_j = agent_pos
-            grid.set(agent_i, agent_j, self.carrying)
-        else:
-            agent_i, agent_j = agent_pos
-            grid.set(agent_i, agent_j, None)
-
-        return grid, vis_mask
-
     def set_camera_params(self):
         self.camera_fov = np.pi/2 # full FOV in radians
         self.camera_range_meters = 10. # range of sensor horizon in meters
@@ -436,7 +412,7 @@ class DrivewayEnv(MiniGridEnv):
             next_states[i,0] = x
             next_states[i,1] = y
             next_states[i,2] = theta_to_theta_ind(theta)
-        return next_states, actions
+        return next_states, actions, 1
 
     def get_reward(self, sparse):
         """Get reward for RL agent. Two options are possible:
@@ -746,8 +722,10 @@ class GenericTerrain(WorldObj):
 
     def encode(self):
         """Encode the a description of this object as a 3-tuple of integers"""
-        return (OBJECT_TO_IDX[self.type], 0, 0)
-        # return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0)
+        if type(self.color) == np.ndarray:
+            return self.color
+        else:
+            return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0)
 
 class Grass(GenericTerrain):
     def __init__(self, color=None):
