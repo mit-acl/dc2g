@@ -22,11 +22,16 @@ Video: [https://youtu.be/yVlnbqEFct0](https://youtu.be/yVlnbqEFct0)
 ```sh
 git clone --recursive <this repo>
 cd dc2g
-python -m pip install -e gym-minigrid
-python -m pip install -e .
+./install.sh
 ```
 
-### Evaluate in the Gridworld
+### Run Example
+This will initialize the environment and run an episode with an Oracle planner:
+```bash
+./example.sh
+```
+
+### Evaluate in the Gridworld (maybe more detailed than needed)
 ```sh
 python -m dc2g.run_episode -p dc2g
 ```
@@ -58,11 +63,13 @@ Coming soon...
 
 ### TODOs
 
+- [x] Get OraclePlanner working again
+- [ ] Get FrontierPlanner working again
+- [ ] Get DC2GPlanner working again
+- [ ] Get DC2GRescalePlanner working again
 - [ ] Create Jupyter notebook to explain code
 - [ ] Confirm `run_episode.py` works
 - [ ] Confirm `run_experiment.py` works
-- [ ] Confirm each planner works
-- [ ] Confirm each planner works
 - [ ] Pull our custom `slam.py` code out of `gym-minigrid`
 - [ ] Add instructions for generating masked semantic/c2g images
 - [ ] Add scripts to generate plots from paper

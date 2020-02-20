@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 
 from dc2g.planners.util import instantiate_planner
 
+# TODO: Don't explicitly import this here, register these envs upon install
+import dc2g.driveway_env
+
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -23,11 +26,11 @@ np.set_printoptions(threshold=np.inf)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-make_individual_figures = False
+make_individual_figures = True
 save_individual_figures = True
 save_panel_figures = False
-plot_panels = True
-make_video = True
+plot_panels = False
+make_video = False
 
 
 import sys, signal
@@ -90,10 +93,10 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
     # Load the gym environment
     env.seed(seed=int(seed))
 
-    env.use_semantic_coloring = planner_args[planner]['use_semantic_coloring']
+    env.use_semantic_coloring = True
+    # env.use_semantic_coloring = planner_args[planner]['use_semantic_coloring']
     env.set_difficulty_level(difficulty_level)
     obs = reset_env(env)
-
     planner_obj = instantiate_planner(planner, env, env_type)
 
     while env.step_count < env.max_steps:
@@ -106,6 +109,8 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
 
         # Execute the action in the environment and receive new observation
         obs, reward, done, info = env.step(action)
+
+        print(obs['pos'], obs['theta_ind'])
 
         # if env.step_count == 10:
         #     # planner_obj.animate_episode(fig_type="observation")
@@ -129,7 +134,7 @@ def main():
         help="gym environment to load",
         # default='AirSim-v0'
         # default='House3D-RoomNav'
-        default='MiniGrid-EmptySLAM-32x32-v0'
+        default='MiniGrid-DrivewayEnv-32x32-v0'
     )
     parser.add_option(
         "-p",
@@ -137,10 +142,10 @@ def main():
         dest="planner",
         help="name of planner to use (e.g. dc2g, frontier)",
         # default='dc2g_without_semantics'
-        default='dc2g'
+        # default='dc2g'
         # default='dc2g_rescale'
         # default='frontier'
-        # default='oracle'
+        default='oracle'
     )
     parser.add_option(
         "-s",
