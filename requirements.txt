@@ -6,3 +6,4 @@ matplotlib
 scikit-image==0.14.2
 imageio
 tensorflow==1.15.2
+notebook

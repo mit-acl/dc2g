@@ -25,3 +25,5 @@ logs/
 venv/
 
 obs*.pkl
+
+.ipynb_checkpoints
