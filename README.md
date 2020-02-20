@@ -22,11 +22,15 @@ Video: [https://youtu.be/yVlnbqEFct0](https://youtu.be/yVlnbqEFct0)
 ```sh
 git clone --recursive <this repo>
 cd dc2g
-python -m pip install -e gym-minigrid
-python -m pip install -e .
+./install.sh
 ```
 
-### Evaluate in the Gridworld
+### Run Example
+```bash
+./example.sh
+```
+
+### Evaluate in the Gridworld (maybe more detailed than needed)
 ```sh
 python -m dc2g.run_episode -p dc2g
 ```

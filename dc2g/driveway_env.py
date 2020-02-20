@@ -21,6 +21,7 @@ class DrivewayEnv(MiniGridEnv):
     """
 
     def __init__(self, size=8):
+        self.grid_size = size
         self.reset_on_init = False
         MiniGridEnv.__init__(
             self,
@@ -62,6 +63,8 @@ class DrivewayEnv(MiniGridEnv):
         # self.world_image_filename = '/home/mfe/code/dc2g/training_data/driveways_icra19/full_semantic/test/world' + str(self.world_id).zfill(3) + '.png'
         # self.world_image_filename = '/home/mfe/code/dc2g/training_data/driveways_icra19/full_semantic/test/world' + str(self.world_id).zfill(3) + '.png'
 
+        self.set_camera_params()
+
         # Probably don't need to call self.reset(), since the process running
         # the env will need to capture the 1st obs anyway.
         self.reset_on_init = False
@@ -98,6 +101,14 @@ class DrivewayEnv(MiniGridEnv):
         # obs = self.gen_obs()
         # return obs
 
+    def _rand_choice(self, choices):
+        """
+        Generate random choice btwn list of options
+        """
+
+        index = self.np_random.randint(0, len(choices))
+        return choices[index]
+
     def show_overlay(self):
         # plt.figure(0)
         traj_array = np.zeros((self.grid_size, self.grid_size, 4), dtype=np.uint8)
@@ -115,7 +126,7 @@ class DrivewayEnv(MiniGridEnv):
         dataset = "driveways_bing_iros19"
         image_type = "full_semantic"
 
-        image_filename = "{dir_path}/../../data/datasets/{dataset}/{image_type}/{mode}/{world_id}{goal}.{extension}"
+        image_filename = "{dir_path}/data/datasets/{dataset}/{image_type}/{mode}/{world_id}{goal}.{extension}"
         worlds = {'training': {'mode': 'train', 'worlds': "world*"},
                   'same_neighborhood': {'mode': 'test', 'worlds': "worldn001*"},
                   'new_neighborhood': {'mode': 'test', 'worlds': "worldn002*"},
@@ -140,15 +151,16 @@ class DrivewayEnv(MiniGridEnv):
             if dataset == "driveways_bing_iros19":
                 category = 'test_scenario'
 
-        world_id_filenames = glob.glob(image_filename.format(
+        image_filename_ = image_filename.format(
             dir_path=dir_path,
             dataset=dataset,
             image_type="full_semantic",
             goal="",
             world_id=worlds[category]['worlds'],
             mode=worlds[category]['mode'],
-            extension="png"
-            ))
+            extension="png")
+
+        world_id_filenames = glob.glob(image_filename_)
 
         self.world_id = None
         while self.world_id in [None, "worldn001m001h002", "worldn002m001h003"]:
@@ -295,15 +307,9 @@ class DrivewayEnv(MiniGridEnv):
 
         return grid, vis_mask
 
-    def gen_obs_grid(self):
-        """
-        Generate the sub-grid observed by the agent.
-        This method also outputs a visibility mask telling us which grid
-        cells the agent can actually see.
-        """
-
+    def set_camera_params(self):
         self.camera_fov = np.pi/2 # full FOV in radians
-        camera_range_meters = 10. # range of sensor horizon in meters
+        self.camera_range_meters = 10. # range of sensor horizon in meters
         self.world_size_m = np.array([100., 100.]) # meters of true world
         self.grid_resolution_array = self.world_size_m / np.array([self.grid.width, self.grid.height]) # meters/gridcell
         self.grid_resolution_array = self.world_size_m / np.array([self.grid.width, self.grid.height]) # meters/gridcell
@@ -311,6 +317,15 @@ class DrivewayEnv(MiniGridEnv):
         self.camera_range_y = int(camera_range_meters / self.grid_resolution_array[1]) # range of sensor horizon in cells
 
         self.grid_resolution = 1
+
+    def gen_obs_grid(self):
+        """
+        Generate the sub-grid observed by the agent.
+        This method also outputs a visibility mask telling us which grid
+        cells the agent can actually see.
+        """
+
+        self.set_camera_params()
 
         grid_inds = np.indices((self.grid.height,self.grid.width))
         grid_array = np.dstack([grid_inds[1], grid_inds[0]])

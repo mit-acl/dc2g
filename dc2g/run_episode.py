@@ -93,7 +93,8 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
     # Load the gym environment
     env.seed(seed=int(seed))
 
-    env.use_semantic_coloring = planner_args[planner]['use_semantic_coloring']
+    env.use_semantic_coloring = True
+    # env.use_semantic_coloring = planner_args[planner]['use_semantic_coloring']
     env.set_difficulty_level(difficulty_level)
     obs = reset_env(env)
 
