@@ -722,10 +722,13 @@ class GenericTerrain(WorldObj):
 
     def encode(self):
         """Encode the a description of this object as a 3-tuple of integers"""
-        if type(self.color) == np.ndarray:
-            return self.color
+        if not self.has_been_seen:
+            return (0,0,0)
         else:
-            return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0)
+            if type(self.color) == np.ndarray:
+                return self.color
+            else:
+                return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0)
 
 class Grass(GenericTerrain):
     def __init__(self, color=None):
