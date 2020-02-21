@@ -265,7 +265,8 @@ class DC2GPlanner(Planner):
         input_data = semantic_array
         if input_data.shape[2] == 3:
             input_data = np.dstack( ( input_data, np.ones(input_data.shape[:2]) ) )
-        input_data = scipy.misc.imresize(input_data, self.tf_tensors['input'].shape[:2], interp='nearest')
+        desired_input_shape = self.tf_tensors['input'].get_shape().as_list()[:2]
+        input_data = resize(input_data, desired_input_shape, order=0)
         if np.max(input_data) > 1:
             input_data = input_data / 255.
         if input_data.shape[2] == 4:
@@ -277,7 +278,7 @@ class DC2GPlanner(Planner):
             goal_rgb = goal_rgb_val = np.array([128., 0., 0.])/255.
             feed_dict[self.tf_tensors['goal_rgb']] = goal_rgb
         output_value = self.tf_sess.run(self.tf_tensors['output'], feed_dict=feed_dict)
-        output_value_resized = scipy.misc.imresize(output_value[:,:,0], semantic_array.shape[:2], interp='nearest')
+        output_value_resized = resize(output_value[:,:,0], semantic_array.shape[:2], order=0)
         c2g_array = output_value_resized
 
         # hsv = plt_colors.rgb_to_hsv(output_value)
