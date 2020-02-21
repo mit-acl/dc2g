@@ -26,12 +26,11 @@ np.set_printoptions(threshold=np.inf)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-make_individual_figures = True
-save_individual_figures = True
+make_individual_figures = False
+save_individual_figures = False
 save_panel_figures = False
 plot_panels = False
 make_video = False
-
 
 import sys, signal
 def signal_handler(signal, frame):
@@ -142,10 +141,10 @@ def main():
         dest="planner",
         help="name of planner to use (e.g. dc2g, frontier)",
         # default='dc2g_without_semantics'
-        # default='dc2g'
+        default='dc2g'
         # default='dc2g_rescale'
         # default='frontier'
-        default='oracle'
+        # default='oracle'
     )
     parser.add_option(
         "-s",
