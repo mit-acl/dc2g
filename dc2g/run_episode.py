@@ -89,15 +89,15 @@ def reset_env(env):
     first_obs = env.reset()
     return first_obs
 
-def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
+def run_episode(planner_name, seed, env, env_type, difficulty_level='easy'):
     # Load the gym environment
     env.seed(seed=int(seed))
 
     env.use_semantic_coloring = True
-    # env.use_semantic_coloring = planner_args[planner]['use_semantic_coloring']
+    # env.use_semantic_coloring = planner_args[planner_name]['use_semantic_coloring']
     env.set_difficulty_level(difficulty_level)
     obs = reset_env(env)
-    planner_obj = instantiate_planner(planner, env, env_type)
+    planner = instantiate_planner(planner_name, env, env_type)
 
     while env.step_count < env.max_steps:
 
@@ -105,7 +105,7 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
         if obs['semantic_gridmap'] is None:
             action = 0
         else:
-            action = planner_obj.plan(obs)
+            action = planner.plan(obs)
 
         # Execute the action in the environment and receive new observation
         obs, reward, done, info = env.step(action)
@@ -113,15 +113,15 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
         print(obs['pos'], obs['theta_ind'])
 
         # if env.step_count == 10:
-        #     # planner_obj.animate_episode(fig_type="observation")
-        #     planner_obj.animate_episode()
+        #     # planner.animate_episode(fig_type="observation")
+        #     planner.animate_episode()
         #     break
 
         # env.render('human')
         if done:
             print('Done! Took {} steps.'.format(env.step_count))
-            planner_obj.animate_episode(fig_type="observation")
-            # planner_obj.animate_episode()
+            planner.animate_episode(fig_type="observation")
+            # planner.animate_episode()
             break
     return done, env.step_count, env.world_id
 
@@ -168,7 +168,7 @@ def main():
         env_type=env_type,
         )
     success, num_steps, world_id = run_episode(
-        planner=options.planner,
+        planner_name=options.planner,
         seed=options.seed,
         env=env,
         env_type=env_type,
