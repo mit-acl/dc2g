@@ -16,8 +16,9 @@ Video: [https://youtu.be/yVlnbqEFct0](https://youtu.be/yVlnbqEFct0)
 - Bing Maps Driveway Dataset (~80 houses)
 - Pre-trained cost-to-go estimation network
 - Gridworld evaluation environment (built on gym-minigrid)
-- Jupyter Notebook to explain code (coming soon...)
+- Jupyter Notebook to explain code
 
+## Instructions
 ### Install
 ```sh
 git clone --recursive <this repo>
@@ -25,18 +26,19 @@ cd dc2g
 ./install.sh
 ```
 
-### Run Example
-This will initialize the environment and run an episode with an Oracle planner:
+### See an Interactive Example in Jupyter Notebook
+Either see `dc2g.ipynb` or run this script to open an interactive notebook in the virtualenv with dependencies installed already: 
+```sh
+./notebook.sh
+```
+
+### Run Example (streamlined version of Jupyter notebook)
+This will initialize the environment and run an episode with a DC2G planner:
 ```bash
 ./example.sh
 ```
 
-### Evaluate in the Gridworld (maybe more detailed than needed)
-```sh
-python -m dc2g.run_episode -p dc2g
-```
-
-### Repo Structure/Organization
+## Repo Structure/Organization
 
 **Bing Maps Driveway Dataset:**
 * `data/datasets/driveways_bing_iros19` contains `.png`s of the 80 houses split into train/val/test, in 3 formats:
@@ -59,7 +61,8 @@ python -m dc2g.run_episode -p dc2g
 * `gym-minigrid` follows the OpenAI Gym API (`env.step`,`env.reset`, etc.) and the particular python script of interest here is `gym-minigrid/gym_minigrid/envs/slam.py`, which inherits from `gym-minigrid/gym_minigrid/minigrid.py` and gives extra capabilities to build up a map of the env over time.
 
 **Jupyter notebook:**
-Coming soon...
+* `dc2g.ipynb` can be viewed in a browser
+* `notebook.sh` opens a local Jupyter notebook instance so you can interactively explore `dc2g.ipynb` in the virtualenv with proper dependencies installed
 
 ### TODOs
 
@@ -67,7 +70,7 @@ Coming soon...
 - [ ] Get FrontierPlanner working again
 - [ ] Get DC2GPlanner working again
 - [ ] Get DC2GRescalePlanner working again
-- [ ] Create Jupyter notebook to explain code
+- [x] Create Jupyter notebook to explain code
 - [ ] Confirm `run_episode.py` works
 - [ ] Confirm `run_experiment.py` works
 - [ ] Pull our custom `slam.py` code out of `gym-minigrid`
