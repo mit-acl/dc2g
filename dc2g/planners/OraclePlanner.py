@@ -21,25 +21,19 @@ class OraclePlanner(Planner):
         self.actions_to_goal = None
 
     def plan(self, obs):
-        print('--- plan ---')
-        print("self.actions_to_goal: {}".format(self.actions_to_goal))
         self.step_number += 1
         self.semantic_gridmap = obs['semantic_gridmap']
         if self.actions_to_goal is None:
             traversable_array, _, _ = find_traversable_inds(self.semantic_gridmap, self.traversable_colors)
             goal_array, _, _ = find_goal_inds(self.semantic_gridmap, self.goal_color, self.room_or_object_goal)
             self.actions_to_goal, _, self.path = planning_utils.breadth_first_search2(traversable_array, goal_array, obs['pos'], obs['theta_ind'], self.env_to_coor, self.env_next_coords, self.env_to_grid, self.env_grid_resolution)
-            print(self.actions_to_goal)
-            # self.plot_oracle_path()
-        # self.plot(obs['semantic_gridmap'])
+            self.plot_oracle_path()
 
         if len(self.actions_to_goal) > 0:
             action = self.actions_to_goal.pop(0)
         else:
-            assert(0)
             print("no more actions in queue...")
             action = 0
-        print("action: {}".format(action))
         return action
 
     def plot_oracle_path(self):
