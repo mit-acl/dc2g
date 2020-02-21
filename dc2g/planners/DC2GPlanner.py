@@ -34,8 +34,8 @@ class DC2GPlanner(Planner):
         model_dir = "{project_path}/data/trained_networks/{model_name}".format(project_path=self.project_path, model_name=model_name)
         saver = tf.compat.v1.train.import_meta_graph(model_dir + "/export.meta")
         saver.restore(self.tf_sess, model_dir + "/export")
-        input_vars = json.loads(tf.compat.v1.get_collection("inputs")[0])
-        output_vars = json.loads(tf.compat.v1.get_collection("outputs")[0])
+        input_vars = json.loads(tf.compat.v1.get_collection("inputs")[0].decode('utf-8'))
+        output_vars = json.loads(tf.compat.v1.get_collection("outputs")[0].decode('utf-8'))
         input = tf.compat.v1.get_default_graph().get_tensor_by_name(input_vars["input"])
         output = tf.compat.v1.get_default_graph().get_tensor_by_name(output_vars[output_name])
         self.tf_tensors = {'input': input, 'output': output}
@@ -82,9 +82,9 @@ class DC2GPlanner(Planner):
                 # print("Have seen the goal, but no path exists to it ==> Using DC2G.")
                 # action = dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, self.sess, self.tf_tensors, self.bfs_parent_dict, self.step_number, self.rescale_semantic_map)
                 action, path = self.dc2g_planner(obs['pos'], obs['theta_ind'], obs['semantic_gridmap'], reachable_array, bfs_parent_dict, traversable_array)
-        self.path = path
+        # self.path = path
         self.plot(obs['semantic_gridmap'])
-        return action, path
+        return action
 
     def visualize(self):
         raise NotImplementedError
