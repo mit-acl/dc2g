@@ -35,7 +35,6 @@ class DrivewayEnv(MiniGridEnv):
 
     def __init__(self, size=8):
         self.finished_init = False
-        self.reset_on_init = False
         self.grid_size = size
         self.reset_on_init = False
         self.remember_seen_cells = True
@@ -92,7 +91,8 @@ class DrivewayEnv(MiniGridEnv):
     def reset(self):
         if not self.reset_on_init and not self.finished_init:
             return
-        return super().reset()
+        
+        return super(DrivewayEnv, self).reset()
 
     def _rand_choice(self, choices):
         """
@@ -257,7 +257,9 @@ class DrivewayEnv(MiniGridEnv):
         # self.start_pos = np.array([inds[1][i]+1, inds[0][i]+1])
         # self.start_dir = 0
 
-        self.place_agent(max_tries=500, reject_fn=reject_untraversable)
+        start_pos, start_dir = self.place_agent(max_tries=500, reject_fn=reject_untraversable)
+        self.start_pos = start_pos
+        self.start_dir = start_dir
         
         # self.place_agent(top=[9, 4], size=[5, 5], max_tries=500, reject_fn=reject_untraversable)
         # print("setting agent at {}, {}".format(self.start_pos, self.start_dir))
@@ -494,13 +496,14 @@ class DrivewayEnv(MiniGridEnv):
         """
 
         self.agent_pos = None
-        pos = self.place_obj(None, top, size, max_tries=max_tries, reject_fn=reject_fn, ok_to_overlap=True)
-        self.agent_pos = pos
+        agent_pos = self.place_obj(None, top, size, max_tries=max_tries, reject_fn=reject_fn, ok_to_overlap=True)
 
         if rand_dir:
-            self.agent_dir = self._rand_int(0, 4)
+            agent_dir = self._rand_int(0, 4)
+        else:
+            agent_dir = 0
 
-        return pos
+        return agent_pos, agent_dir
 
     def place_obj(self,
         obj,

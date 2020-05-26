@@ -73,7 +73,7 @@ This will initialize the environment and run an episode with a DC2G planner:
 - [x] Create Jupyter notebook to explain code
 - [ ] Confirm `run_episode.py` works
 - [ ] Confirm `run_experiment.py` works
-- [ ] Pull our custom `slam.py` code out of `gym-minigrid`
+- [ ] Pull our custom `slam.py` code out of `gym-minigrid` -- WIP: see `driveway_env.py` which subclasses `MiniGridEnv` from `gym-minigrid-mit` (python 2.7 compatible version of gym-minigrid)
 - [ ] Add instructions for generating masked semantic/c2g images
 - [ ] Add scripts to generate plots from paper
 
