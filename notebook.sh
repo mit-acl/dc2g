@@ -20,8 +20,7 @@ export PYTHONPATH=$DIR/dc2g:$PYTHONPATH
 print_header "Running Example"
 cd $DIR
 
-# # Comment for using GPU
-# export CUDA_VISIBLE_DEVICES=-1
+ipython kernel install --name "venv" --user
 
 # Notebook
 jupyter notebook dc2g.ipynb

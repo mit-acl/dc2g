@@ -1,9 +1,8 @@
 numpy>=1.14.0
-gym[atari]==0.10.5
+gym==0.10.5
 tensorboardX>=1.2
-PyQt5
 matplotlib
 scikit-image==0.14.2
-imageio
-tensorflow==1.15.2
+imageio==2.1.0
+tensorflow==1.15.0
 notebook
