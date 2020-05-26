@@ -9,7 +9,7 @@ class OraclePlanner(Planner):
     def __init__(self, traversable_colors, goal_color, room_or_object_goal, world_image_filename, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_world_array, env_render, name="Oracle"):
         super(OraclePlanner, self).__init__(name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render)
 
-        # self.semantic_gridmap = env_world_array
+        self.semantic_gridmap = env_world_array
         # self.world_image_filename = world_image_filename
         # self.semantic_gridmap = plt.imread(self.world_image_filename)
 
@@ -21,14 +21,16 @@ class OraclePlanner(Planner):
         self.actions_to_goal = None
 
     def plan(self, obs):
+        """ Already has access to semantic_gridmap. Just needs current pos,theta. """
         self.step_number += 1
-        self.semantic_gridmap = obs['semantic_gridmap']
         if self.actions_to_goal is None:
+            # On first call, compute entire path to goal
             traversable_array, _, _ = find_traversable_inds(self.semantic_gridmap, self.traversable_colors)
             goal_array, _, _ = find_goal_inds(self.semantic_gridmap, self.goal_color, self.room_or_object_goal)
             self.actions_to_goal, _, self.path = planning_utils.breadth_first_search2(traversable_array, goal_array, obs['pos'], obs['theta_ind'], self.env_to_coor, self.env_next_coords, self.env_to_grid, self.env_grid_resolution)
             self.plot_oracle_path()
 
+        # After that, just grab the next action from the list each time plan is called.
         if len(self.actions_to_goal) > 0:
             action = self.actions_to_goal.pop(0)
         else:

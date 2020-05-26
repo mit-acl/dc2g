@@ -310,15 +310,14 @@ class DrivewayEnv(MiniGridEnv):
                 cell.has_been_seen = True
         self.grid.get(*self.agent_pos).has_been_seen = True
 
-        return None, None
-
     def gen_obs(self):
         """
         Generate the agent's view (partially observable, low-resolution encoding)
         """
 
-        # grid: the small region the agent can currently see
-        grid, vis_mask = self.gen_obs_grid()
+        # set self.grid.has_been_seen = True for the cells within the region the
+        # agent can currently see
+        self.gen_obs_grid()
 
         # Encode the partially observable view into a numpy array
         image = np.transpose(self.grid.encode(), axes=(1, 0, 2)) / 255.0
@@ -342,6 +341,9 @@ class DrivewayEnv(MiniGridEnv):
         }
 
         return obs
+
+    def render(self):
+        return np.transpose(self.grid.encode(show_trajectory=True), axes=(1, 0, 2)) / 255.0
 
     def to_grid(self, x, y):
         return x, y
@@ -723,9 +725,9 @@ class GenericTerrain(WorldObj):
             (1          ,           1)
         ])
 
-    def encode(self):
+    def encode(self, ignore_whether_seen=False):
         """Encode the a description of this object as a 3-tuple of integers"""
-        if not self.has_been_seen:
+        if not self.has_been_seen and not ignore_whether_seen:
             return (0,0,0)
         else:
             if type(self.color) == np.ndarray:

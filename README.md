@@ -76,6 +76,7 @@ This will initialize the environment and run an episode with a DC2G planner:
 - [ ] Pull our custom `slam.py` code out of `gym-minigrid` -- WIP: see `driveway_env.py` which subclasses `MiniGridEnv` from `gym-minigrid-mit` (python 2.7 compatible version of gym-minigrid)
 - [ ] Add instructions for generating masked semantic/c2g images
 - [ ] Add scripts to generate plots from paper
+- [ ] Switch over to `gym-minigrid`, rather than `gym-minigrid-mit`
 
 ### If you find this code useful, please consider citing our paper:
 ```

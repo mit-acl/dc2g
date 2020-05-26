@@ -51,6 +51,7 @@ class DC2GPlanner(Planner):
         # return 0
 
         self.step_number += 1
+        self.setup_plots_()
         traversable_array, _, _ = find_traversable_inds(obs['semantic_gridmap'], self.traversable_colors)
 
         num_inflations = 3
@@ -115,7 +116,7 @@ class DC2GPlanner(Planner):
         self.c2g_array = c2g_array
 
         if self.plot_panels:
-            plt.figure("DC2G")
+            plt.figure("Planner Panel")
             plt.subplot(self.subplots["DC2G"])
             plt.imshow(c2g_array, cmap=plt.cm.gray, interpolation='nearest')
         if self.save_individual_figures:
@@ -240,7 +241,7 @@ class DC2GPlanner(Planner):
                 for key in keys:
                     param = colors[key]
                     legend_elements.append(Patch(facecolor=param["color"], label=param['name']))
-                plt.figure("DC2G")
+                plt.figure("Planner Panel")
                 plt.subplot(self.subplots["planner"])
                 # plt.legend(handles=legend_elements, bbox_to_anchor=(1,1.02,1,0.2), loc="lower left", mode="expand", ncol=len(colors))
                 plt.legend(handles=legend_elements, loc="upper right", ncol=2, fontsize=12)

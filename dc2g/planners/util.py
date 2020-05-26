@@ -57,6 +57,7 @@ def instantiate_planner(planner_name, env, env_type,
     env_grid_resolution = env.grid_resolution if env_grid_resolution is None else env_grid_resolution
     env_render = env.render if env_render is None else env_render
     env_world_image_filename = env.world_image_filename if env_world_image_filename is None else env_world_image_filename
+    env_world_array = env.world_array if env_world_array is None else env_world_array
 
     # for attr in ['camera_fov', 'camera_range_x', 'camera_range_y', 'to_coor', 'next_coords', 'to_grid', 'grid_resolution', 'render', 'world_image_filename']:
     #     exec('env_{} = env.{} if env_{} is None else env_{}'.format(attr, attr, attr, attr, attr))
