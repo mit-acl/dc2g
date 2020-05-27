@@ -36,13 +36,6 @@ planner_args = {
         },
 }
 
-# make_individual_figures = False
-# save_individual_figures = False
-# save_panel_figures = False
-# plot_panels = True
-# make_panels = True
-# make_video = False
-
 def instantiate_planner(planner_name, env, env_type,
     env_camera_fov=None, env_camera_range_x=None, env_camera_range_y=None, env_to_coor=None, env_next_coords=None, env_to_grid=None, env_grid_resolution=None,
     env_render=None, env_world_image_filename=None, env_world_array=None,
@@ -100,6 +93,21 @@ def instantiate_planner(planner_name, env, env_type,
             'env_render':           env_render
         }
         planner = DC2GRescalePlanner(**kwargs)
+    elif planner_name == 'frontier':
+        kwargs = {
+            'traversable_colors':   traversable_colors,
+            'goal_color':           goal_color,
+            'room_or_object_goal':  room_or_object_goal,
+            'camera_fov':           env_camera_fov,
+            'camera_range_x':       env_camera_range_x,
+            'camera_range_y':       env_camera_range_y,
+            'env_to_coor':          env_to_coor,
+            'env_next_coords':      env_next_coords,
+            'env_to_grid':          env_to_grid,
+            'env_grid_resolution':  env_grid_resolution,
+            'env_render':           env_render
+        }
+        planner = FrontierPlanner(**kwargs)
     elif planner_name == 'oracle':
         kwargs = {
             'traversable_colors':   traversable_colors,
