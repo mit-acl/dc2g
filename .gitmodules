@@ -1,6 +1,3 @@
 [submodule "gym-minigrid-mit"]
 	path = gym-minigrid-mit
 	url = git@github.com:mit-acl/gym-minigrid.git
-[submodule "gym-minigrid"]
-	path = gym-minigrid
-	url = git@github.com:maximecb/gym-minigrid.git
