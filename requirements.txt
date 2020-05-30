@@ -6,3 +6,4 @@ scikit-image==0.14.2
 imageio==2.1.0
 tensorflow==1.15.0
 notebook
+pandas

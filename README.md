@@ -67,16 +67,15 @@ This will initialize the environment and run an episode with a DC2G planner:
 ### TODOs
 
 - [x] Get OraclePlanner working again
-- [ ] Get FrontierPlanner working again
-- [ ] Get DC2GPlanner working again
-- [ ] Get DC2GRescalePlanner working again
+- [x] Get FrontierPlanner working again
+- [x] Get DC2GPlanner working again
+- [x] Get DC2GRescalePlanner working again
 - [x] Create Jupyter notebook to explain code
-- [ ] Confirm `run_episode.py` works
+- [x] Confirm `run_episode.py` works
 - [ ] Confirm `run_experiment.py` works
-- [ ] Pull our custom `slam.py` code out of `gym-minigrid` -- WIP: see `driveway_env.py` which subclasses `MiniGridEnv` from `gym-minigrid-mit` (python 2.7 compatible version of gym-minigrid)
 - [ ] Add instructions for generating masked semantic/c2g images
 - [ ] Add scripts to generate plots from paper
-- [ ] Switch over to `gym-minigrid`, rather than `gym-minigrid-mit`
+- [x] Pull our custom `slam.py` code out of `gym-minigrid` -- see `driveway_env.py` which subclasses `MiniGridEnv` from `gym-minigrid-mit` (python 2.7 compatible version of gym-minigrid)
 
 ### If you find this code useful, please consider citing our paper:
 ```

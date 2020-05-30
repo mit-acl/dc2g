@@ -10,8 +10,7 @@ import matplotlib.pyplot as plt
 
 class DC2GPlanner(FrontierPlanner):
     def __init__(self, model_name, traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render, output_name="output_masked", name="DC2G"):
-        super(DC2GPlanner, self).__init__(traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render, name)
-        self.rescale_semantic_map = False
+        super(DC2GPlanner, self).__init__(traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render, name=name)
 
         self.load_model(model_name, output_name)
 

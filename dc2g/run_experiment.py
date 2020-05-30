@@ -159,7 +159,7 @@ def plot(results=None):
             for trial_num in range(num_trials):
                 num_steps_arr[trial_num, i] = results[world_difficulty][trial_num][planner]['num_steps']
                 extra_num_steps_arr[trial_num, i] = results[world_difficulty][trial_num][planner]['num_steps'] - results[world_difficulty][trial_num]['oracle']['num_steps']
-                pct_incr_num_steps_arr[trial_num, i] = 100.*(results[world_difficulty][trial_num][planner]['num_steps'] - results[world_difficulty][trial_num]['dc2g']['num_steps']) / float(results[world_difficulty][trial_num]['dc2g']['num_steps'])
+                pct_incr_num_steps_arr[trial_num, i] = 100.*(results[world_difficulty][trial_num][planner]['num_steps'] - results[world_difficulty][trial_num]['oracle']['num_steps']) / float(results[world_difficulty][trial_num]['oracle']['num_steps'])
                 success_arr[trial_num, i] = results[world_difficulty][trial_num][planner]['success']
             # print(extra_num_steps_arr)
             # planner_mean = np.mean(extra_num_steps_arr[:, i])
@@ -175,6 +175,7 @@ def plot(results=None):
 
             data = pct_incr_num_steps_arr[:,i]
             median = np.median(data)
+
             upper_quartile = np.percentile(data, 75)
             lower_quartile = np.percentile(data, 25)
             iqr = upper_quartile - lower_quartile

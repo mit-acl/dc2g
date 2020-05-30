@@ -58,7 +58,7 @@ class Planner(object):
         self.save_panel_figures = save_panel_figures
         self.save_individual_figures = save_individual_figures
         self.make_video = make_video
-        self.setup_plots_()
+        # self.setup_plots_()
 
     def setup_plots_(self):
         

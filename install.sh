@@ -19,7 +19,7 @@ python -m pip install -e .
 
 # Add PYTHONPATH
 export PYTHONPATH=$DIR/..:$PYTHONPATH
-export PYTHONPATH=$DIR/../gym-minigrid-mit:$PYTHONPATH
+export PYTHONPATH=$DIR/../gym-minigrid:$PYTHONPATH
 
 # Allow jupyter notebook to use venv as kernel
 python -m pip install ipykernel

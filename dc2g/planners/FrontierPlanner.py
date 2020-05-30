@@ -9,6 +9,7 @@ class FrontierPlanner(Planner):
     def __init__(self, traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render, output_name="output_masked", name="Frontier"):
         super(FrontierPlanner, self).__init__(name, traversable_colors, goal_color, room_or_object_goal, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render)
 
+        # These parameters determine what a frontier pt is
         self.camera_fov = camera_fov
         self.camera_range_x = camera_range_x
         self.camera_range_y = camera_range_y
@@ -18,16 +19,16 @@ class FrontierPlanner(Planner):
         self.env_to_grid = env_to_grid
         self.env_grid_resolution = env_grid_resolution
 
-        self.name = name
-        self.step_number = 0
-
+        # What planner to call when the goal is not in sight/not yet reachable
         self.search_planner = self.bfs_planner
 
+        ### Traversability parameters
         # With perfect semantic map
         self.num_inflations_traversability = 0
         # # With imperfect semantic map, allow a little fudging on traversability
         # self.num_inflations_traversability = 3
 
+        ### Visualization parameters
         # For small env, no need to inflate path viz
         self.num_inflations_visualize_path = 0
         # # For large env, inflate path viz
@@ -86,9 +87,11 @@ class FrontierPlanner(Planner):
 
         self.frontier_array = frontier_array
 
+
         if frontier_cost_array is None:
-            # TODO: Fix this for Frontier planner
-            lowest_cost_frontier_ind = [0, 0]
+            actions_to_frontier, point_on_frontier, path = planning_utils.breadth_first_search2(reachable_array, fov_aware_reachable_frontier_array, position, theta_ind, self.env_to_coor, self.env_next_coords, self.env_to_grid, self.env_grid_resolution)
+            # print("path: {}, point_on_frontier: {}".format(path, point_on_frontier))
+            # print("actions_to_frontier: {}".format(actions_to_frontier))
         else:
             frontier_c2gs = np.zeros_like(frontier_cost_array)
             frontier_c2gs[np.any(fov_aware_reachable_frontier_array, axis=2) == 1] = frontier_cost_array[np.any(fov_aware_reachable_frontier_array, axis=2) == 1]
@@ -98,20 +101,18 @@ class FrontierPlanner(Planner):
                 lowest_cost_frontier_ind = np.unravel_index(np.any(fov_aware_reachable_frontier_array, axis=2).argmax(), frontier_c2gs.shape)
             else:
                 lowest_cost_frontier_ind = np.unravel_index(frontier_c2gs.argmax(), frontier_c2gs.shape)
-
-        lowest_cost_frontier_state = (lowest_cost_frontier_ind[1], lowest_cost_frontier_ind[0])
-
-        # print("lowest_cost_frontier_state: {}".format(lowest_cost_frontier_state))
-        # print("bfs_parent_dict: {}".format(bfs_parent_dict))
-        actions_to_frontier, _, path = planning_utils.construct_path(lowest_cost_frontier_state, bfs_parent_dict)
-
-        if position[0] == lowest_cost_frontier_state[0] and position[1] == lowest_cost_frontier_state[1]:
-            print("[dc2g_planner] warning: currently at the frontier position ==> spin toward nearest theta that is a frontier theta.")
-            frontier_thetas = np.where(fov_aware_reachable_frontier_array[lowest_cost_frontier_ind])[0]
-            closest_theta_arg = np.argmin((theta_ind - frontier_thetas) % fov_aware_reachable_frontier_array.shape[2])
-            closest_theta = frontier_thetas[closest_theta_arg]
-            lowest_cost_frontier_state = (lowest_cost_frontier_state[0], lowest_cost_frontier_state[1], closest_theta)
+            lowest_cost_frontier_state = (lowest_cost_frontier_ind[1], lowest_cost_frontier_ind[0])
+            # print("lowest_cost_frontier_state: {}".format(lowest_cost_frontier_state))
+            # print("bfs_parent_dict: {}".format(bfs_parent_dict))
             actions_to_frontier, _, path = planning_utils.construct_path(lowest_cost_frontier_state, bfs_parent_dict)
+
+            if position[0] == lowest_cost_frontier_state[0] and position[1] == lowest_cost_frontier_state[1]:
+                print("[dc2g_planner] warning: currently at the frontier position ==> spin toward nearest theta that is a frontier theta.")
+                frontier_thetas = np.where(fov_aware_reachable_frontier_array[lowest_cost_frontier_ind])[0]
+                closest_theta_arg = np.argmin((theta_ind - frontier_thetas) % fov_aware_reachable_frontier_array.shape[2])
+                closest_theta = frontier_thetas[closest_theta_arg]
+                lowest_cost_frontier_state = (lowest_cost_frontier_state[0], lowest_cost_frontier_state[1], closest_theta)
+                actions_to_frontier, _, path = planning_utils.construct_path(lowest_cost_frontier_state, bfs_parent_dict)
 
         if len(actions_to_frontier) == 0:
             print("[dc2g_planner] warning: len(actions_to_frontier)==0 ==> somehow we are at a frontier pt, which means it shouldn't be called a frontier pt. disagreement btwn camera in env and frontier pt finder. spin?")

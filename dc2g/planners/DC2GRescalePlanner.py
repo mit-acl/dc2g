@@ -5,7 +5,6 @@ from dc2g.planners.DC2GPlanner import DC2GPlanner
 class DC2GRescalePlanner(DC2GPlanner):
     def __init__(self, model_name, traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render, output_name="output", name="DC2G_Rescale"):
         super(DC2GRescalePlanner, self).__init__(model_name, traversable_colors, goal_color, room_or_object_goal, camera_fov, camera_range_x, camera_range_y, env_to_coor, env_next_coords, env_to_grid, env_grid_resolution, env_render, output_name="output", name=name)
-        self.rescale_semantic_map = True
 
     def c2g_query(self, semantic_array):
         padding = 2
