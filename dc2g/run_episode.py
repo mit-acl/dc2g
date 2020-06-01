@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 
 from dc2g.planners.util import instantiate_planner
 
+# TODO: Don't explicitly import this here, register these envs upon install
+import dc2g.driveway_env
+
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -24,11 +27,10 @@ np.set_printoptions(threshold=np.inf)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 make_individual_figures = False
-save_individual_figures = True
+save_individual_figures = False
 save_panel_figures = False
-plot_panels = True
-make_video = True
-
+plot_panels = False
+make_video = False
 
 import sys, signal
 def signal_handler(signal, frame):
@@ -86,15 +88,15 @@ def reset_env(env):
     first_obs = env.reset()
     return first_obs
 
-def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
+def run_episode(planner_name, seed, env, env_type, difficulty_level='easy', plot_panels=False):
     # Load the gym environment
     env.seed(seed=int(seed))
 
-    env.use_semantic_coloring = planner_args[planner]['use_semantic_coloring']
+    env.use_semantic_coloring = True
+    # env.use_semantic_coloring = planner_args[planner_name]['use_semantic_coloring']
     env.set_difficulty_level(difficulty_level)
     obs = reset_env(env)
-
-    planner_obj = instantiate_planner(planner, env, env_type)
+    planner = instantiate_planner(planner_name, env, env_type, plot_panels=plot_panels)
 
     while env.step_count < env.max_steps:
 
@@ -102,21 +104,23 @@ def run_episode(planner, seed, env, env_type, difficulty_level='easy'):
         if obs['semantic_gridmap'] is None:
             action = 0
         else:
-            action = planner_obj.plan(obs)
+            action = planner.plan(obs)
 
         # Execute the action in the environment and receive new observation
         obs, reward, done, info = env.step(action)
 
+        print(obs['pos'], obs['theta_ind'])
+
         # if env.step_count == 10:
-        #     # planner_obj.animate_episode(fig_type="observation")
-        #     planner_obj.animate_episode()
+        #     # planner.animate_episode(fig_type="observation")
+        #     planner.animate_episode()
         #     break
 
         # env.render('human')
         if done:
             print('Done! Took {} steps.'.format(env.step_count))
-            planner_obj.animate_episode(fig_type="observation")
-            # planner_obj.animate_episode()
+            planner.animate_episode(fig_type="observation")
+            # planner.animate_episode()
             break
     return done, env.step_count, env.world_id
 
@@ -129,7 +133,7 @@ def main():
         help="gym environment to load",
         # default='AirSim-v0'
         # default='House3D-RoomNav'
-        default='MiniGrid-EmptySLAM-32x32-v0'
+        default='MiniGrid-DrivewayEnv-32x32-v0'
     )
     parser.add_option(
         "-p",
@@ -163,7 +167,7 @@ def main():
         env_type=env_type,
         )
     success, num_steps, world_id = run_episode(
-        planner=options.planner,
+        planner_name=options.planner,
         seed=options.seed,
         env=env,
         env_type=env_type,
@@ -173,48 +177,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# To duplicate ICRA 19 search experiment (dc2g vs frontier on a single setup), use this command:
-# python3 /home/mfe/code/dc2g/run_episode.py --planner frontier --seed 1324
-
-### using 2018-09-13_15_51_57.pkl ###############################################################
-# # steps improvement over oracle (on each episode)
-# root@9a7ec89d3925:/home/mfe/code/baselines# python3 /home/mfe/code/dc2g/run_experiment.py 
-# easy dc2g 7.833333333333333 7.7977917101930565
-# easy dc2g_rescale 17.133333333333333 15.683820396262584
-# easy frontier 75.9 47.22029930725415
-# medium dc2g 44.86666666666667 28.126776487104873
-# medium dc2g_rescale 50.93333333333333 34.22955188462482
-# medium frontier 75.2 51.99384578967014
-# hard dc2g 205.33333333333334 154.34557186895762
-# hard dc2g_rescale 181.53333333333333 177.00955404221045
-# hard frontier 88.46666666666667 74.58003903339163
-
-# # pct increase over oracle (on each episode)
-# easy dc2g 0.270599881202737 0.28855391250361495
-# easy dc2g_rescale 0.4816548830645126 0.4077706428167549
-# easy frontier 2.8237796603954193 2.8788060235515505
-# medium dc2g 1.4896587519378828 1.410429295315634
-# medium dc2g_rescale 1.390809750658729 1.0523059787623652
-# medium frontier 2.4351604780402436 2.981008615136291
-# hard dc2g 10.717210471352766 12.422022585185918
-# hard dc2g_rescale 7.577344522715777 7.680369559640723
-# hard frontier 4.17461877934621 3.9921799250063414
-
-# # total num steps (on each episode)
-# easy oracle 32.166666666666664 10.456523747827903
-# easy dc2g 40.0 13.30663994653296
-# easy dc2g_rescale 49.3 23.279676400958266
-# easy frontier 108.06666666666666 46.99924349272964
-# medium oracle 37.7 15.106621064950295
-# medium dc2g 82.56666666666666 31.538001768589517
-# medium dc2g_rescale 88.63333333333334 44.16369801343885
-# medium frontier 112.9 54.6847632648559
-# hard oracle 23.566666666666666 12.093202865889399
-# hard dc2g 228.9 159.91859387409167
-# hard dc2g_rescale 205.1 184.19253513647072
-# hard frontier 112.03333333333333 78.17564980364551
-
-
-

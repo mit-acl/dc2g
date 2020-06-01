@@ -58,16 +58,19 @@ class Planner(object):
         self.save_panel_figures = save_panel_figures
         self.save_individual_figures = save_individual_figures
         self.make_video = make_video
+        # self.setup_plots_()
+
+    def setup_plots_(self):
         
-        if make_individual_figures:
-            fig = plt.figure('C2G', figsize=(12, 12))
+        if self.make_individual_figures:
+            fig_c2g = plt.figure('C2G', figsize=(12, 12))
             plt.axis('off')
-            fig = plt.figure('Observation', figsize=(12, 12))
+            fig_obs = plt.figure('Observation', figsize=(12, 12))
             plt.axis('off')
-            fig = plt.figure('Environment', figsize=(12, 12))
+            fig_env = plt.figure('Environment', figsize=(12, 12))
             plt.axis('off')
-        if plot_panels:
-            fig = plt.figure('DC2G', figsize=(24, 10))
+        if self.plot_panels:
+            fig = plt.figure('Planner Panel', figsize=(24, 10))
             ax = fig.add_subplot(self.subplots["obs"])
             ax.set_axis_off()
             ax.set_title('2D Partial Semantic Map')
@@ -107,27 +110,28 @@ class Planner(object):
 
     def plot(self, full_semantic_array):
         if self.plot_panels:
-            plt.figure("DC2G")
+            plt.figure("Planner Panel")
             plt.suptitle('\n\nPlanner: {name} -- Step: {step}'.format(name=self.name,step=self.step_number))
 
-            # render_mode = "rgb_array"
-            # render = self.env_render(mode=render_mode, show_trajectory=True) # TODO: add support for show_trajectory to House3D
-            # plt.subplot(self.subplots["render"])
-            # plt.imshow(render)
+            render = self.env_render()
+            plt.subplot(self.subplots["render"])
+            plt.imshow(render)
 
             # if make_individual_figures:
             #     plt.figure("Environment")
             #     plt.imshow(render)
 
-            plt.figure("DC2G")
+            plt.figure("Planner Panel")
             plt.subplot(self.subplots["obs"])
             plt.imshow(full_semantic_array, interpolation='nearest')
             # plt.imshow(render)
 
-            if self.save_panel_figures or self.make_video:
-                plt.figure("DC2G")
-                plt.savefig(self.fig_filename("panels", "png"))
+            # if self.save_panel_figures or self.make_video:
+            #     plt.figure("DC2G")
+            #     plt.savefig(self.fig_filename("panels", "png"))
+
             # plt.pause(0.01)
+
             plt.show()
         if self.save_individual_figures or self.make_video:
             # plt.imsave("{individual_figure_path}/results/environment/step_{step_num}.png".format(individual_figure_path=self.individual_figure_path, step_num=str(self.step_number).zfill(3)), render)
